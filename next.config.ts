@@ -2,9 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Ảnh quán/phim do host dán URL bất kỳ từ admin (Google Maps, fanpage...)
-    // nên phải mở wildcard https — site riêng tư, chỉ host kiểm soát nội dung
-    remotePatterns: [{ protocol: "https", hostname: "**" }],
+    // Chỉ cho Blob của mình qua Image Optimization; ảnh dán URL ngoài dùng
+    // unoptimized (xem src/lib/image-src.ts) — không mở wildcard để /_next/image
+    // không thành proxy ảnh công khai
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
   },
 };
 

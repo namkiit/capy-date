@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect } from "react";
 import { Mascot } from "@/components/Mascot";
 import type { OptionRow } from "@/lib/db/schema";
+import { isOptimizableImage } from "@/lib/image-src";
 
 interface OptionDetailSheetProps {
   option: OptionRow;
@@ -54,7 +55,14 @@ export function OptionDetailSheet({
                 key={src}
                 className="relative aspect-[4/3] w-4/5 shrink-0 snap-center overflow-hidden rounded-2xl bg-latte"
               >
-                <Image src={src} alt={option.name} fill sizes="80vw" className="object-cover" />
+                <Image
+                  src={src}
+                  alt={option.name}
+                  fill
+                  sizes="80vw"
+                  className="object-cover"
+                  unoptimized={!isOptimizableImage(src)}
+                />
               </div>
             ))}
           </div>

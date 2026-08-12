@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { isOptimizableImage } from "@/lib/image-src";
 import type { DresscodeConfig } from "@/lib/types";
 import { SectionShell } from "./SectionShell";
 
@@ -46,7 +47,14 @@ export function Step7Dresscode({ dresscode, vibeChoices, vibe, onPickVibe }: Ste
               key={src}
               className="relative aspect-[3/4] w-40 shrink-0 snap-center overflow-hidden rounded-2xl bg-latte"
             >
-              <Image src={src} alt="Mood dresscode" fill sizes="160px" className="object-cover" />
+              <Image
+                src={src}
+                alt="Mood dresscode"
+                fill
+                sizes="160px"
+                className="object-cover"
+                unoptimized={!isOptimizableImage(src)}
+              />
             </div>
           ))}
         </div>

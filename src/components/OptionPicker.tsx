@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Mascot } from "@/components/Mascot";
 import { OptionDetailSheet } from "@/components/OptionDetailSheet";
 import type { OptionRow } from "@/lib/db/schema";
+import { isOptimizableImage } from "@/lib/image-src";
 import type { StepChoice } from "@/lib/types";
 
 interface OptionPickerProps {
@@ -66,6 +67,7 @@ export function OptionPicker({
                     fill
                     sizes="(max-width: 640px) 50vw, 280px"
                     className="object-cover"
+                    unoptimized={!isOptimizableImage(option.images[0])}
                   />
                 ) : (
                   <div className="flex h-full items-end justify-center">
