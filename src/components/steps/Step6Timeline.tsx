@@ -34,7 +34,13 @@ export function Step6Timeline({
     >
       <ol className="relative ml-1 space-y-0">
         {items.map((item, index) => (
-          <li key={`${item.time}-${item.label}`} className="relative flex gap-4 pb-6 last:pb-0">
+          <motion.li
+            key={`${item.time}-${item.label}`}
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.15 + index * 0.12, duration: 0.4, ease: "easeOut" }}
+            className="relative flex gap-4 pb-6 last:pb-0"
+          >
             {/* đường nối dọc */}
             {index < items.length - 1 && (
               <span
@@ -49,7 +55,7 @@ export function Step6Timeline({
               <p className="font-display text-sm font-bold text-tangerine">{item.time}</p>
               <p className="leading-snug text-ink">{item.label}</p>
             </div>
-          </li>
+          </motion.li>
         ))}
       </ol>
 

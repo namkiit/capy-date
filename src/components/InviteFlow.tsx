@@ -367,7 +367,7 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
 
       {/* Mascot góc màn hình — thay cho cursor trên mobile, đổi biểu cảm theo tương tác */}
       <div className="pointer-events-none fixed bottom-3 right-3 z-40 md:hidden">
-        <Mascot expression={mood} className="w-20 drop-shadow-sm" />
+        <Mascot expression={mood} alive className="w-20 drop-shadow-sm" />
       </div>
     </main>
   );

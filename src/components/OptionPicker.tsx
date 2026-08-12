@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
 import { Mascot } from "@/components/Mascot";
@@ -44,12 +44,17 @@ export function OptionPicker({
   return (
     <div>
       <div className="grid grid-cols-2 gap-3">
-        {options.map((option) => {
+        {options.map((option, index) => {
           const isSelected = option.id === selectedId;
           return (
-            <button
+            <motion.button
               key={option.id}
               onClick={() => setDetail(option)}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.07, duration: 0.35, ease: "easeOut" }}
+              whileHover={{ y: -4 }}
+              whileTap={{ scale: 0.97 }}
               className={`relative overflow-hidden rounded-2xl bg-sand text-left transition-shadow ${
                 isSelected ? "ring-3 ring-tangerine shadow-lg shadow-tangerine/20" : "hover:shadow-md"
               }`}
@@ -88,27 +93,39 @@ export function OptionPicker({
                   </p>
                 )}
               </div>
-            </button>
+            </motion.button>
           );
         })}
 
         {/* card surprise — chọn ngay không cần sheet */}
-        <button
+        <motion.button
           onClick={() => onChoose({ kind: "surprise" })}
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: options.length * 0.07, duration: 0.35, ease: "easeOut" }}
+          whileHover={{ y: -4 }}
+          whileTap={{ scale: 0.97 }}
           className={`flex min-h-40 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-3 text-center transition-colors ${
             choice?.kind === "surprise"
               ? "border-tangerine bg-tangerine/10 ring-3 ring-tangerine"
               : "border-capy/50 bg-cream hover:bg-sand"
           }`}
         >
-          <span className="font-display text-4xl">🎲</span>
+          {/* xúc xắc lắc nhẹ cho ra chất "may rủi" */}
+          <motion.span
+            className="font-display text-4xl"
+            animate={{ rotate: [0, -12, 12, -6, 0] }}
+            transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 2.6, ease: "easeInOut" }}
+          >
+            🎲
+          </motion.span>
           <span className="font-display font-bold leading-snug text-capy-deep">
             {surpriseLabel}
           </span>
           {choice?.kind === "surprise" && (
             <span className="text-xs font-semibold text-tangerine">Đã chọn ✓</span>
           )}
-        </button>
+        </motion.button>
       </div>
 
       {skipLabel && (

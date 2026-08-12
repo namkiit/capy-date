@@ -12,6 +12,10 @@ interface Step0LandingProps {
 
 /** Bước 0 — Landing hero kiểu proposal gửi client */
 export function Step0Landing({ content, briefOpened, onOpenBrief }: Step0LandingProps) {
+  // tách dấu hỏi cuối tên site để lắc riêng — tên do host đặt nên có thể không có "?"
+  const [, titleHead = content.siteName, titleMark = ""] =
+    content.siteName.match(/^(.*[^?])(\?+)$/) ?? [];
+
   return (
     <section className="mx-auto flex min-h-[88svh] w-full max-w-xl flex-col items-center justify-center px-5 py-12 text-center">
       <motion.div
@@ -19,7 +23,13 @@ export function Step0Landing({ content, briefOpened, onOpenBrief }: Step0Landing
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <Mascot expression="idle" className="mx-auto w-40 sm:w-48" />
+        {/* bồng bềnh nhẹ để hero không đứng chết một chỗ */}
+        <motion.div
+          animate={{ y: [0, -9, 0] }}
+          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <Mascot expression="idle" alive className="mx-auto w-40 sm:w-48" />
+        </motion.div>
       </motion.div>
 
       <motion.p
@@ -37,7 +47,21 @@ export function Step0Landing({ content, briefOpened, onOpenBrief }: Step0Landing
         transition={{ delay: 0.25 }}
         className="mt-2 font-display text-5xl font-bold text-ink sm:text-6xl"
       >
-        {content.siteName}
+        {titleHead}
+        {titleMark && (
+          <motion.span
+            className="inline-block origin-bottom-left"
+            animate={{ rotate: [0, -16, 13, -7, 3, 0] }}
+            transition={{
+              duration: 1.6,
+              repeat: Infinity,
+              repeatDelay: 2.2,
+              ease: "easeInOut",
+            }}
+          >
+            {titleMark}
+          </motion.span>
+        )}
       </motion.h1>
 
       <motion.div
@@ -59,9 +83,17 @@ export function Step0Landing({ content, briefOpened, onOpenBrief }: Step0Landing
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ delay: 0.45 }}
             onClick={onOpenBrief}
-            className="mt-8 rounded-full bg-tangerine px-8 py-3.5 font-display text-lg font-bold text-cream shadow-lg shadow-tangerine/25 transition-transform active:scale-95"
+            className="mt-8 rounded-full bg-tangerine font-display text-lg font-bold text-cream shadow-lg shadow-tangerine/25"
           >
-            Xem brief 📋
+            {/* lớp trong tự pulse để mời gọi; tách khỏi nút ngoài để không đụng animation vào/ra */}
+            <motion.span
+              className="block px-8 py-3.5"
+              animate={{ scale: [1, 1.045, 1] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Xem brief 📋
+            </motion.span>
           </motion.button>
         )}
       </AnimatePresence>

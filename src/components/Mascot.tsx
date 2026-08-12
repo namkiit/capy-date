@@ -1,8 +1,17 @@
+"use client";
+
+import { motion, useReducedMotion } from "motion/react";
+
 export type MascotExpression = "idle" | "happy" | "sleepy";
 
 interface MascotProps {
   expression?: MascotExpression;
   className?: string;
+  /**
+   * Bật nhịp thở + quả cam nảy. Mặc định tắt vì thiệp mời được chụp thành PNG
+   * (html-to-image) nên mascot ở đó phải đứng yên.
+   */
+  alive?: boolean;
 }
 
 /**
@@ -10,13 +19,25 @@ interface MascotProps {
  * idle (mắt tròn), happy (mắt cong + má hồng), sleepy (mắt nhắm + zzz).
  * Quả cam trên đầu là chữ ký của mascot, luôn hiển thị.
  */
-export function Mascot({ expression = "idle", className }: MascotProps) {
+export function Mascot({ expression = "idle", className, alive = false }: MascotProps) {
+  const reduceMotion = useReducedMotion();
+  const animated = alive && !reduceMotion;
+  // ngủ thì thở chậm và sâu hơn
+  const breathDuration = expression === "sleepy" ? 4.6 : 3.4;
+
   return (
-    <svg
+    <motion.svg
       viewBox="0 0 140 110"
       className={className}
       role="img"
       aria-label={`Capybara mascot (${expression})`}
+      style={{ transformOrigin: "50% 100%" }}
+      animate={animated ? { scaleY: [1, 1.04, 1], scaleX: [1, 0.99, 1] } : undefined}
+      transition={
+        animated
+          ? { duration: breathDuration, repeat: Infinity, ease: "easeInOut" }
+          : undefined
+      }
     >
       {/* chân */}
       <rect x="32" y="92" width="9" height="12" rx="4" fill="#8b6b4f" />
@@ -76,17 +97,24 @@ export function Mascot({ expression = "idle", className }: MascotProps) {
           </text>
         </g>
       )}
-      {/* quả cam trên đầu — chữ ký capybara */}
-      <circle cx="82" cy="11" r="7.5" fill="#f4a259" />
-      <path
-        d="M82 4.5 q0 -2.5 2.5 -3"
-        stroke="#8a9a5b"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <ellipse cx="87" cy="3.5" rx="3.4" ry="1.8" fill="#8a9a5b" transform="rotate(24 87 3.5)" />
-      <circle cx="79.5" cy="8.5" r="1.8" fill="#f7bd83" />
-    </svg>
+      {/* quả cam trên đầu — chữ ký capybara, nảy nhẹ theo nhịp riêng */}
+      <motion.g
+        animate={animated ? { y: [0, -2.6, 0] } : undefined}
+        transition={
+          animated ? { duration: 2.2, repeat: Infinity, ease: "easeInOut" } : undefined
+        }
+      >
+        <circle cx="82" cy="11" r="7.5" fill="#f4a259" />
+        <path
+          d="M82 4.5 q0 -2.5 2.5 -3"
+          stroke="#8a9a5b"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <ellipse cx="87" cy="3.5" rx="3.4" ry="1.8" fill="#8a9a5b" transform="rotate(24 87 3.5)" />
+        <circle cx="79.5" cy="8.5" r="1.8" fill="#f7bd83" />
+      </motion.g>
+    </motion.svg>
   );
 }

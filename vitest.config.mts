@@ -14,5 +14,6 @@ export default defineConfig({
     // Test component thêm pragma `// @vitest-environment jsdom` ở đầu file.
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}"],
+    setupFiles: ["./vitest.setup.ts"],
   },
 });
