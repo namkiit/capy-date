@@ -1,6 +1,5 @@
 "use client";
 
-import { toPng } from "html-to-image";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
 import { Mascot } from "@/components/Mascot";
@@ -31,6 +30,8 @@ export function InviteCard({ content, date, slot, timelineItems, vibe, onClose }
     setDownloading(true);
     setDownloadNote(null);
     try {
+      // import động — html-to-image chỉ cần khi bấm tải
+      const { toPng } = await import("html-to-image");
       const dataUrl = await toPng(cardRef.current, {
         pixelRatio: 2,
         backgroundColor: "#faf6ef",

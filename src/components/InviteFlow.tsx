@@ -197,7 +197,7 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
       }
       update({ submittedAt: new Date().toISOString() });
       celebrate();
-      fireCelebration();
+      void fireCelebration();
       setCardOpen(true);
     } catch {
       setSubmitError("Không kết nối được server — kiểm tra mạng rồi thử lại nha 🥲");

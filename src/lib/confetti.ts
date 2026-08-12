@@ -1,11 +1,11 @@
-import confetti from "canvas-confetti";
-
 /**
  * Confetti ăn mừng theo theme capybara: quả cam + lá, KHÔNG trái tim.
- * Tôn trọng prefers-reduced-motion.
+ * Tôn trọng prefers-reduced-motion. canvas-confetti được import động
+ * để không nằm trong bundle ban đầu (chỉ cần lúc submit).
  */
-export function fireCelebration(): void {
+export async function fireCelebration(): Promise<void> {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const confetti = (await import("canvas-confetti")).default;
 
   const orange = confetti.shapeFromText({ text: "🍊", scalar: 2 });
   const leaf = confetti.shapeFromText({ text: "🍃", scalar: 2 });
