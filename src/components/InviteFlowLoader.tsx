@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { Mascot } from "@/components/Mascot";
 import type { OptionsByType } from "@/lib/db/queries";
 import type { DayAvailability } from "@/lib/services/schedule";
-import type { ContentConfig } from "@/lib/types";
+import type { ContentConfig, TimelineDurations } from "@/lib/types";
 
 /**
  * InviteFlow render client-only (ssr:false) để đọc localStorage ngay trong
@@ -27,8 +27,9 @@ interface InviteFlowLoaderProps {
   content: ContentConfig;
   days: DayAvailability[];
   options: OptionsByType;
+  durations: TimelineDurations;
 }
 
-export function InviteFlowLoader({ content, days, options }: InviteFlowLoaderProps) {
-  return <InviteFlow content={content} days={days} options={options} />;
+export function InviteFlowLoader({ content, days, options, durations }: InviteFlowLoaderProps) {
+  return <InviteFlow content={content} days={days} options={options} durations={durations} />;
 }

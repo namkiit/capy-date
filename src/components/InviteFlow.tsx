@@ -1,14 +1,17 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Mascot, type MascotExpression } from "@/components/Mascot";
 import { OptionPicker } from "@/components/OptionPicker";
 import { Step0Landing } from "@/components/steps/Step0Landing";
 import { Step1YesNo } from "@/components/steps/Step1YesNo";
 import { Step2Schedule } from "@/components/steps/Step2Schedule";
+import { Step6Timeline } from "@/components/steps/Step6Timeline";
+import { Step7Dresscode } from "@/components/steps/Step7Dresscode";
 import { SectionShell } from "@/components/steps/SectionShell";
 import type { OptionsByType } from "@/lib/db/queries";
+import { buildTimeline } from "@/lib/services/timeline";
 import {
   FLOW_STORAGE_KEY,
   parseFlowState,
@@ -17,7 +20,7 @@ import {
   type FlowState,
 } from "@/lib/flow-state";
 import type { DayAvailability } from "@/lib/services/schedule";
-import type { ContentConfig, StepChoice } from "@/lib/types";
+import type { ContentConfig, StepChoice, TimelineDurations } from "@/lib/types";
 
 /** Sau khoảng im lặng này (ms) mascot chuyển sang ngủ */
 const SLEEPY_AFTER_MS = 45_000;
@@ -29,6 +32,7 @@ interface InviteFlowProps {
   /** Calendar đã tính sẵn server-side theo giờ VN */
   days: DayAvailability[];
   options: OptionsByType;
+  durations: TimelineDurations;
 }
 
 /**
@@ -36,7 +40,7 @@ interface InviteFlowProps {
  * Component này render client-only (ssr:false qua InviteFlowLoader) nên đọc
  * localStorage thẳng trong useState initializer — không cần effect hydrate.
  */
-export function InviteFlow({ content, days, options }: InviteFlowProps) {
+export function InviteFlow({ content, days, options, durations }: InviteFlowProps) {
   const [state, setState] = useState<FlowState>(() =>
     sanitizeChoices(
       sanitizeFlowState(parseFlowState(window.localStorage.getItem(FLOW_STORAGE_KEY)), days),
@@ -140,6 +144,40 @@ export function InviteFlow({ content, days, options }: InviteFlowProps) {
     [scrollTo]
   );
 
+  const handleConfirmTimeline = useCallback(() => {
+    update({ timelineConfirmed: true });
+    scrollTo("step-dresscode");
+  }, [update, scrollTo]);
+
+  const handlePickVibe = useCallback(
+    (vibe: string) => {
+      update({ vibe });
+      scrollTo("step-submit");
+    },
+    [update, scrollTo]
+  );
+
+  const handleFeedbackChange = useCallback(
+    (feedback: string) => update({ feedback }),
+    [update]
+  );
+
+  const allChosen = state.slot !== null && state.food !== null && state.movie !== null && state.cafe !== null;
+
+  const timelineItems = useMemo(() => {
+    if (!allChosen || state.slot === null || !state.food || !state.movie || !state.cafe) {
+      return [];
+    }
+    return buildTimeline({
+      slot: state.slot,
+      food: state.food,
+      movie: state.movie,
+      cafe: state.cafe,
+      durations,
+      pickupPlace: content.pickupPlace,
+    });
+  }, [allChosen, state.slot, state.food, state.movie, state.cafe, durations, content.pickupPlace]);
+
   return (
     <main className="relative flex-1 pb-24">
       <Step0Landing
@@ -224,7 +262,25 @@ export function InviteFlow({ content, days, options }: InviteFlowProps) {
           />
         </SectionShell>
       )}
-      {/* các bước tiếp theo (timeline, dresscode, submit) gắn vào đây ở phase sau */}
+      {allChosen && (
+        <Step6Timeline
+          items={timelineItems}
+          confirmed={state.timelineConfirmed}
+          feedback={state.feedback}
+          onFeedbackChange={handleFeedbackChange}
+          onConfirm={handleConfirmTimeline}
+        />
+      )}
+
+      {state.timelineConfirmed && (
+        <Step7Dresscode
+          dresscode={content.dresscode}
+          vibeChoices={content.vibeChoices}
+          vibe={state.vibe}
+          onPickVibe={handlePickVibe}
+        />
+      )}
+      {/* bước submit + thiệp gắn vào đây ở phase sau */}
 
       {/* Mascot góc màn hình — thay cho cursor trên mobile, đổi biểu cảm theo tương tác */}
       <div className="pointer-events-none fixed bottom-3 right-3 z-40 md:hidden">

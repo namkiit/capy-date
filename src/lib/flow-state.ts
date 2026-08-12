@@ -24,6 +24,8 @@ export interface FlowState {
   food: StepChoice | null;
   movie: StepChoice | null;
   cafe: StepChoice | null;
+  /** Đã duyệt media plan (bước timeline) */
+  timelineConfirmed: boolean;
   vibe: string | null;
   feedback: string;
   /** ISO datetime của lần submit thành công gần nhất */
@@ -40,6 +42,7 @@ export const INITIAL_FLOW_STATE: FlowState = {
   food: null,
   movie: null,
   cafe: null,
+  timelineConfirmed: false,
   vibe: null,
   feedback: "",
   submittedAt: null,

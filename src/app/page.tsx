@@ -9,5 +9,12 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const [config, options] = await Promise.all([getAppConfig(), getActiveOptionsGrouped()]);
   const days = buildCalendar(config.schedule, getTodayInVietnam());
-  return <InviteFlowLoader content={config.content} days={days} options={options} />;
+  return (
+    <InviteFlowLoader
+      content={config.content}
+      days={days}
+      options={options}
+      durations={config.durations}
+    />
+  );
 }
