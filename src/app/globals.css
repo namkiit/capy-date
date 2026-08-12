@@ -28,12 +28,31 @@ body {
   color: var(--color-ink);
 }
 
+:root {
+  --cursor-capy: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><rect x='3' y='9' width='25' height='17' rx='8.5' fill='%23b08968'/><circle cx='9' cy='9' r='3' fill='%238b6b4f'/><circle cx='19' cy='8' r='3' fill='%238b6b4f'/><ellipse cx='24' cy='19' rx='6.5' ry='5' fill='%23c9a87c'/><circle cx='17' cy='15' r='2' fill='%233e2f23'/><circle cx='26' cy='18' r='1.2' fill='%236f5138'/><circle cx='14' cy='4' r='3.5' fill='%23f4a259'/></svg>")
+    4 4, auto;
+}
+
 /* Con trỏ capybara — chỉ desktop (pointer: fine); Safari không hỗ trợ SVG cursor sẽ tự fallback */
 @media (pointer: fine) {
-  body {
-    cursor:
-      url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><rect x='3' y='9' width='25' height='17' rx='8.5' fill='%23b08968'/><circle cx='9' cy='9' r='3' fill='%238b6b4f'/><circle cx='19' cy='8' r='3' fill='%238b6b4f'/><ellipse cx='24' cy='19' rx='6.5' ry='5' fill='%23c9a87c'/><circle cx='17' cy='15' r='2' fill='%233e2f23'/><circle cx='26' cy='18' r='1.2' fill='%236f5138'/><circle cx='14' cy='4' r='3.5' fill='%23f4a259'/></svg>")
-        4 4,
-      auto;
+  /*
+   * Khai báo cho MỌI phần tử chứ không chỉ body: UA stylesheet đặt cursor riêng
+   * cho button/select/a/summary... nên các phần tử đó không kế thừa từ body và
+   * nhảy về mũi tên mặc định khi hover.
+   */
+  *,
+  *::before,
+  *::after {
+    cursor: var(--cursor-capy);
+  }
+
+  /* Vùng gõ chữ giữ caret để thấy rõ chỗ nhập, nút bị khóa giữ dấu cấm */
+  input:not([type="checkbox"], [type="radio"]),
+  textarea {
+    cursor: text;
+  }
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
   }
 }
