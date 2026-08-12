@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { checkRateLimit, clientIp } from "@/lib/rate-limit";
 import {
   SubmissionValidationError,
   submissionInputSchema,
@@ -7,6 +8,14 @@ import {
 
 /** POST /api/submit — nhận lựa chọn của khách, validate ở boundary rồi giao cho service */
 export async function POST(request: Request) {
+  // chặn spam thô (mỗi submit = 1 record + 1 email) — người dùng thật không đụng trần này
+  if (!checkRateLimit(`submit:${clientIp(request)}`, 10, 60_000)) {
+    return NextResponse.json(
+      { ok: false, error: "Gửi nhiều quá rồi — đợi chút rồi thử lại nha" },
+      { status: 429 }
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -19,8 +28,11 @@ export async function POST(request: Request) {
 
   const parsed = submissionInputSchema.safeParse(body);
   if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    // log để host còn debug được — không nuốt lỗi im lặng
+    console.warn("Submit payload sai cấu trúc:", parsed.error.issues);
     return NextResponse.json(
-      { ok: false, error: "Dữ liệu gửi lên không đúng cấu trúc" },
+      { ok: false, error: `Dữ liệu gửi lên không hợp lệ (${issue.path.join(".")})` },
       { status: 400 }
     );
   }

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
-import { listSubmissions } from "@/lib/db/queries";
+import { requireAdmin } from "@/lib/require-admin";
+import { listAllSubmissions } from "@/lib/services/submission";
 
 export async function GET() {
-  const submissions = await listSubmissions();
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
+  const submissions = await listAllSubmissions();
   return NextResponse.json({ ok: true, submissions });
 }

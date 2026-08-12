@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   createSubmission,
   getActiveOptionsGrouped,
+  listSubmissions,
   type OptionsByType,
 } from "@/lib/db/queries";
 import type { SubmissionRow } from "@/lib/db/schema";
@@ -23,7 +24,7 @@ const stepChoiceSchema = z.discriminatedUnion("kind", [
 
 export const submissionInputSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date phải dạng YYYY-MM-DD"),
-  slot: z.string().regex(/^\d{2}:\d{2}$/, "slot phải dạng HH:mm"),
+  slot: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "slot phải dạng HH:mm (00:00–23:59)"),
   food: stepChoiceSchema,
   movie: stepChoiceSchema,
   cafe: stepChoiceSchema,
@@ -140,4 +141,9 @@ export async function submitInvitation(input: SubmissionInput): Promise<Submissi
     console.error(`Gửi email notify cho submission #${row.id} thất bại:`, err);
   }
   return row;
+}
+
+/** Danh sách submission cho trang admin (mới nhất trước) */
+export async function listAllSubmissions(): Promise<SubmissionRow[]> {
+  return listSubmissions();
 }

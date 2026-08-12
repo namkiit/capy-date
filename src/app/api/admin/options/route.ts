@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { optionInputSchema } from "@/lib/admin-schemas";
-import { createOption, getAllOptions } from "@/lib/db/queries";
+import { requireAdmin } from "@/lib/require-admin";
+import { addOption, listAllOptions } from "@/lib/services/options";
 
 export async function GET() {
-  const options = await getAllOptions();
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
+  const options = await listAllOptions();
   return NextResponse.json({ ok: true, options });
 }
 
 export async function POST(request: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   let body: unknown;
   try {
     body = await request.json();
@@ -22,6 +29,6 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  const option = await createOption(parsed.data);
+  const option = await addOption(parsed.data);
   return NextResponse.json({ ok: true, option });
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { configUpdateSchema } from "@/lib/admin-schemas";
+import { requireAdmin } from "@/lib/require-admin";
 import {
   getAppConfig,
   saveContentConfig,
@@ -8,11 +9,17 @@ import {
 } from "@/lib/services/app-config";
 
 export async function GET() {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   const config = await getAppConfig();
   return NextResponse.json({ ok: true, config });
 }
 
 export async function PUT(request: Request) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   let body: unknown;
   try {
     body = await request.json();

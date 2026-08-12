@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { optionInputSchema } from "@/lib/admin-schemas";
-import { deleteOption, updateOption } from "@/lib/db/queries";
+import { requireAdmin } from "@/lib/require-admin";
+import { editOption, removeOption } from "@/lib/services/options";
 
 function parseId(id: string): number | null {
   const num = Number(id);
@@ -8,6 +9,9 @@ function parseId(id: string): number | null {
 }
 
 export async function PUT(request: Request, { params }: RouteContext<"/api/admin/options/[id]">) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   const { id } = await params;
   const optionId = parseId(id);
   if (optionId === null) {
@@ -29,7 +33,7 @@ export async function PUT(request: Request, { params }: RouteContext<"/api/admin
     );
   }
 
-  const option = await updateOption(optionId, parsed.data);
+  const option = await editOption(optionId, parsed.data);
   if (!option) {
     return NextResponse.json({ ok: false, error: `Không tìm thấy option #${optionId}` }, { status: 404 });
   }
@@ -37,12 +41,15 @@ export async function PUT(request: Request, { params }: RouteContext<"/api/admin
 }
 
 export async function DELETE(_request: Request, { params }: RouteContext<"/api/admin/options/[id]">) {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
   const { id } = await params;
   const optionId = parseId(id);
   if (optionId === null) {
     return NextResponse.json({ ok: false, error: "Id không hợp lệ" }, { status: 400 });
   }
-  const deleted = await deleteOption(optionId);
+  const deleted = await removeOption(optionId);
   if (!deleted) {
     return NextResponse.json({ ok: false, error: `Không tìm thấy option #${optionId}` }, { status: 404 });
   }

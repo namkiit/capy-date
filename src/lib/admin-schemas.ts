@@ -2,8 +2,13 @@ import { z } from "zod";
 
 /** Zod schemas validate input admin ở boundary (API routes) */
 
-const timeSlot = z.string().regex(/^\d{2}:\d{2}$/, "Slot phải dạng HH:mm");
+const timeSlot = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Slot phải dạng HH:mm (00:00–23:59)");
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Ngày phải dạng YYYY-MM-DD");
+/** URL chỉ nhận https — chặn javascript: và mixed content khi render vào href/src */
+const httpsUrl = (max: number) =>
+  z.string().max(max).startsWith("https://", "Link phải bắt đầu bằng https://");
 
 export const scheduleConfigSchema = z.object({
   weeksAhead: z.number().int().min(1).max(8),
@@ -16,7 +21,7 @@ export const scheduleConfigSchema = z.object({
 export const dresscodeConfigSchema = z.object({
   description: z.string().max(1000),
   colors: z.array(z.string().regex(/^#[0-9a-fA-F]{6}$/, "Màu phải dạng #rrggbb")).max(8),
-  imageUrls: z.array(z.string().max(1000)).max(6),
+  imageUrls: z.array(httpsUrl(1000)).max(6),
 });
 
 export const contentConfigSchema = z.object({
@@ -48,7 +53,7 @@ export const configUpdateSchema = z.object({
 });
 
 export const optionExtraSchema = z.object({
-  trailerUrl: z.string().max(500).optional(),
+  trailerUrl: httpsUrl(500).optional(),
   genre: z.string().max(100).optional(),
   suggestedShowtime: z.string().max(200).optional(),
 });
@@ -57,10 +62,10 @@ export const optionInputSchema = z.object({
   type: z.enum(["food", "movie", "cafe"]),
   name: z.string().min(1).max(200),
   description: z.string().max(1000),
-  images: z.array(z.string().min(1).max(1000)).max(6),
+  images: z.array(httpsUrl(1000)).max(6),
   priceRange: z.string().max(100).nullable(),
   address: z.string().max(300).nullable(),
-  mapUrl: z.string().max(500).nullable(),
+  mapUrl: httpsUrl(500).nullable(),
   hostNote: z.string().max(500).nullable(),
   extra: optionExtraSchema.nullable(),
   isActive: z.boolean(),
