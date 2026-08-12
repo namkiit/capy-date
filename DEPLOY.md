@@ -56,7 +56,7 @@ Project → **Settings → Environment Variables**, thêm cho Production:
 | `RESEND_API_KEY` | key từ bước 5 |
 | `NOTIFY_EMAIL_FROM` | `Capy Date <onboarding@resend.dev>` |
 | `NOTIFY_EMAIL_TO` | email của bạn (email đăng ký Resend) |
-| `NEXT_PUBLIC_SITE_URL` | `https://capydate.vercel.app` (URL thật sau khi deploy) |
+| `NEXT_PUBLIC_SITE_URL` | `https://capydate.vercel.app` (URL thật sau khi deploy) — **BẮT BUỘC**, quên là OG image trỏ localhost và preview link trên Messenger/Zalo vỡ |
 
 (`DATABASE_URL`, `BLOB_READ_WRITE_TOKEN` đã được Storage tự thêm.)
 
