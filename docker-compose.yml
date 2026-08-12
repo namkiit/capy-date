@@ -1,0 +1,17 @@
+# Postgres cho môi trường dev local — production dùng Neon (DATABASE_URL khác)
+# Chạy: docker compose up -d
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: capy-date-db
+    environment:
+      POSTGRES_USER: capy
+      POSTGRES_PASSWORD: capy
+      POSTGRES_DB: capydate
+    ports:
+      - "5433:5432"
+    volumes:
+      - capy_date_pgdata:/var/lib/postgresql/data
+
+volumes:
+  capy_date_pgdata:
