@@ -16,10 +16,10 @@ import { fireCelebration } from "@/lib/confetti";
 import type { OptionsByType } from "@/lib/db/queries";
 import { buildTimeline } from "@/lib/services/timeline";
 import {
-  FLOW_STORAGE_KEY,
-  parseFlowState,
+  readStoredFlowState,
   sanitizeChoices,
   sanitizeFlowState,
+  writeStoredFlowState,
   type FlowState,
 } from "@/lib/flow-state";
 import type { DayAvailability } from "@/lib/services/schedule";
@@ -45,22 +45,19 @@ interface InviteFlowProps {
  */
 export function InviteFlow({ content, days, options, durations }: InviteFlowProps) {
   const [state, setState] = useState<FlowState>(() =>
-    sanitizeChoices(
-      sanitizeFlowState(parseFlowState(window.localStorage.getItem(FLOW_STORAGE_KEY)), days),
-      {
-        activeIds: {
-          food: options.food.map((o) => o.id),
-          movie: options.movie.map((o) => o.id),
-          cafe: options.cafe.map((o) => o.id),
-        },
-        allowSkipMovie: content.allowSkipMovie,
-        allowSkipCafe: content.allowSkipCafe,
-      }
-    )
+    sanitizeChoices(sanitizeFlowState(readStoredFlowState(), days), {
+      activeIds: {
+        food: options.food.map((o) => o.id),
+        movie: options.movie.map((o) => o.id),
+        cafe: options.cafe.map((o) => o.id),
+      },
+      allowSkipMovie: content.allowSkipMovie,
+      allowSkipCafe: content.allowSkipCafe,
+    })
   );
 
   useEffect(() => {
-    window.localStorage.setItem(FLOW_STORAGE_KEY, JSON.stringify(state));
+    writeStoredFlowState(state);
   }, [state]);
 
   const update = useCallback((patch: Partial<FlowState>) => {
@@ -139,13 +136,13 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
   const handleChoose = useCallback(
     (field: "food" | "movie" | "cafe", nextSectionId: string) =>
       (choice: StepChoice) => {
-        setState((prev) => {
-          // chỉ tự cuộn khi chọn lần đầu — đổi lựa chọn sau đó không kéo user đi
-          if (prev[field] === null) scrollTo(nextSectionId);
-          return { ...prev, [field]: choice };
-        });
+        // đọc state ngoài updater — side effect trong updater không an toàn
+        // (React được phép gọi lại updater trong StrictMode/concurrent render).
+        // Chỉ tự cuộn khi chọn lần đầu, đổi lựa chọn sau đó không kéo user đi.
+        if (state[field] === null) scrollTo(nextSectionId);
+        setState((prev) => ({ ...prev, [field]: choice }));
       },
-    [scrollTo]
+    [state, scrollTo]
   );
 
   const handleConfirmTimeline = useCallback(() => {

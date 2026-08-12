@@ -22,6 +22,9 @@ export function Step6Timeline({
   onConfirm,
 }: Step6TimelineProps) {
   const [showFeedback, setShowFeedback] = useState(feedback.length > 0);
+  // draft cục bộ, chỉ lift lên state cha (persist localStorage) khi blur —
+  // tránh JSON.stringify + write + re-render toàn cây mỗi phím gõ
+  const [draft, setDraft] = useState(feedback);
 
   return (
     <SectionShell
@@ -69,10 +72,12 @@ export function Step6Timeline({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              value={feedback}
-              onChange={(e) => onFeedbackChange(e.target.value)}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={() => onFeedbackChange(draft)}
               placeholder="Feedback gì cứ ghi ở đây, agency tiếp thu hết…"
               rows={3}
+              maxLength={2000}
               className="w-full rounded-2xl border-2 border-latte bg-cream px-4 py-3 text-sm text-ink outline-none placeholder:text-ink-soft/60 focus:border-capy"
             />
           )}

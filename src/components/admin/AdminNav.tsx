@@ -16,8 +16,14 @@ export function AdminNav() {
   const router = useRouter();
 
   async function handleLogout() {
-    await adminApi("/api/admin/logout", { method: "POST" });
-    router.push("/admin/login");
+    try {
+      await adminApi("/api/admin/logout", { method: "POST" });
+    } catch (err) {
+      // API fail vẫn đưa về trang login — cookie có thể đã hết hạn sẵn
+      console.error("Logout API thất bại:", err);
+    } finally {
+      router.push("/admin/login");
+    }
   }
 
   return (

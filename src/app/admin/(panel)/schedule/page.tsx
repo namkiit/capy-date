@@ -10,6 +10,7 @@ import {
   type AdminMessage,
 } from "@/components/admin/AdminUI";
 import { adminApi } from "@/lib/admin-client";
+import { buildCalendar, getTodayInVietnam } from "@/lib/services/schedule";
 import type { AppConfig, ScheduleConfig } from "@/lib/types";
 
 const WEEKDAY_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
@@ -20,14 +21,7 @@ function parseSlots(raw: string): string[] | null {
     .split(",")
     .map((t) => t.trim())
     .filter((t) => t.length > 0);
-  return tokens.every((t) => /^\d{2}:\d{2}$/.test(t)) ? tokens : null;
-}
-
-function localDateStr(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return tokens.every((t) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t)) ? tokens : null;
 }
 
 export default function AdminSchedulePage() {
@@ -51,17 +45,15 @@ export default function AdminSchedulePage() {
       );
   }, []);
 
-  // grid ngày từ ngày mai theo weeksAhead — giờ máy admin (host ở VN)
+  // grid ngày tính theo GIỜ VN như phía khách (buildCalendar) — host mở admin từ
+  // múi giờ khác cũng không lệch ngày; chỉ lấy date/isoWeekday, trạng thái bận
+  // hiển thị trực tiếp từ schedule state
   const days = useMemo(() => {
     if (!schedule) return [];
-    const result: Array<{ date: string; isoWeekday: number }> = [];
-    const now = new Date();
-    for (let i = 1; i <= schedule.weeksAhead * 7; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
-      const jsDay = d.getDay();
-      result.push({ date: localDateStr(d), isoWeekday: jsDay === 0 ? 7 : jsDay });
-    }
-    return result;
+    return buildCalendar(schedule, getTodayInVietnam()).map((d) => ({
+      date: d.date,
+      isoWeekday: d.isoWeekday,
+    }));
   }, [schedule]);
 
   if (!schedule) {

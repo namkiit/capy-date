@@ -49,6 +49,27 @@ export const INITIAL_FLOW_STATE: FlowState = {
 };
 
 /**
+ * Đọc/ghi localStorage có try/catch — Safari "Block All Cookies" hoặc một số
+ * in-app browser (Messenger/Zalo) chặn storage sẽ throw; khi đó chạy tiếp với
+ * state trong RAM (mất resume, không mất cả site).
+ */
+export function readStoredFlowState(): FlowState {
+  try {
+    return parseFlowState(window.localStorage.getItem(FLOW_STORAGE_KEY));
+  } catch {
+    return INITIAL_FLOW_STATE;
+  }
+}
+
+export function writeStoredFlowState(state: FlowState): void {
+  try {
+    window.localStorage.setItem(FLOW_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // storage bị chặn/đầy — bỏ qua, không phá flow
+  }
+}
+
+/**
  * Parse state từ localStorage: JSON hỏng hoặc sai version → reset về initial.
  * Merge lên initial để field mới thêm vào code không bị thiếu với state cũ cùng version.
  */

@@ -24,6 +24,7 @@ export interface TimelineInput {
 }
 
 const MINUTES_PER_DAY = 24 * 60;
+const SURPRISE_PLACE_LABEL = "quán bí mật của anh 🤫";
 
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
@@ -69,11 +70,12 @@ export function buildTimeline(input: TimelineInput): TimelineItem[] {
   });
 
   let cursor = start;
-  const foodName = choiceLabel(food, "quán bí mật của anh 🤫");
+  // food không cho skip nên nhánh ?? chỉ là type-safety, không phải flow thật
+  const foodName = choiceLabel(food, SURPRISE_PLACE_LABEL) ?? SURPRISE_PLACE_LABEL;
   items.push({
     time: toHhmm(cursor),
     icon: "🍜",
-    label: `${mealWord(start)} tại ${foodName ?? "quán bí mật của anh 🤫"}`,
+    label: `${mealWord(start)} tại ${foodName}`,
   });
   cursor += durations.foodMinutes;
 
@@ -83,7 +85,7 @@ export function buildTimeline(input: TimelineInput): TimelineItem[] {
     cursor += durations.movieMinutes;
   }
 
-  const cafeName = choiceLabel(cafe, "quán bí mật của anh 🤫");
+  const cafeName = choiceLabel(cafe, SURPRISE_PLACE_LABEL);
   if (cafeName !== null) {
     items.push({
       time: toHhmm(cursor),
