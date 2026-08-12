@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { InviteCard } from "@/components/InviteCard";
 import { Mascot, type MascotExpression } from "@/components/Mascot";
 import { OptionPicker } from "@/components/OptionPicker";
 import { Step0Landing } from "@/components/steps/Step0Landing";
@@ -9,7 +10,9 @@ import { Step1YesNo } from "@/components/steps/Step1YesNo";
 import { Step2Schedule } from "@/components/steps/Step2Schedule";
 import { Step6Timeline } from "@/components/steps/Step6Timeline";
 import { Step7Dresscode } from "@/components/steps/Step7Dresscode";
+import { Step8Submit } from "@/components/steps/Step8Submit";
 import { SectionShell } from "@/components/steps/SectionShell";
+import { fireCelebration } from "@/lib/confetti";
 import type { OptionsByType } from "@/lib/db/queries";
 import { buildTimeline } from "@/lib/services/timeline";
 import {
@@ -162,6 +165,47 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
     [update]
   );
 
+  // ---- submit ----
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  // mở lại site sau khi đã chốt deal → hiện thẳng thiệp
+  const [cardOpen, setCardOpen] = useState(() => state.submittedAt !== null);
+
+  const handleSubmit = useCallback(async () => {
+    if (!state.date || !state.slot || !state.food || !state.movie || !state.cafe) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: state.date,
+          slot: state.slot,
+          food: state.food,
+          movie: state.movie,
+          cafe: state.cafe,
+          vibe: state.vibe,
+          feedback: state.feedback,
+          noDodgeCount: state.noDodgeCount,
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setSubmitError(data.error ?? "Gửi không thành công, thử lại nha 🥲");
+        return;
+      }
+      update({ submittedAt: new Date().toISOString() });
+      celebrate();
+      fireCelebration();
+      setCardOpen(true);
+    } catch {
+      setSubmitError("Không kết nối được server — kiểm tra mạng rồi thử lại nha 🥲");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [state, update, celebrate]);
+
   const allChosen = state.slot !== null && state.food !== null && state.movie !== null && state.cafe !== null;
 
   const timelineItems = useMemo(() => {
@@ -280,7 +324,29 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
           onPickVibe={handlePickVibe}
         />
       )}
-      {/* bước submit + thiệp gắn vào đây ở phase sau */}
+
+      {state.timelineConfirmed && state.vibe !== null && (
+        <Step8Submit
+          submitting={submitting}
+          submittedAt={state.submittedAt}
+          error={submitError}
+          onSubmit={handleSubmit}
+          onShowCard={() => setCardOpen(true)}
+        />
+      )}
+
+      <AnimatePresence>
+        {cardOpen && state.date && state.slot && (
+          <InviteCard
+            content={content}
+            date={state.date}
+            slot={state.slot}
+            timelineItems={timelineItems}
+            vibe={state.vibe}
+            onClose={() => setCardOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Mascot góc màn hình — thay cho cursor trên mobile, đổi biểu cảm theo tương tác */}
       <div className="pointer-events-none fixed bottom-3 right-3 z-40 md:hidden">
