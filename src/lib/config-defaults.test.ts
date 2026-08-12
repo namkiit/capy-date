@@ -23,13 +23,15 @@ describe("mergeWithDefaults", () => {
     expect(mergeWithDefaults(DEFAULT_SCHEDULE, 42)).toEqual(DEFAULT_SCHEDULE);
   });
 
-  it("field null trong DB đè default thành null thay vì fallback — khóa hành vi hiện tại", () => {
-    const stored = { guestName: null };
+  it("field null trong DB bị bỏ qua và fallback về default (không đè thành null)", () => {
+    const stored = { guestName: null, hostName: undefined, yesNoQuestion: "Đi hông?" };
 
     const merged = mergeWithDefaults(DEFAULT_CONTENT, stored);
 
-    expect(merged.guestName).toBeNull();
-    // field khác không có trong DB vẫn giữ default
+    expect(merged.guestName).toBe(DEFAULT_CONTENT.guestName);
+    expect(merged.hostName).toBe(DEFAULT_CONTENT.hostName);
+    // field hợp lệ vẫn đè bình thường
+    expect(merged.yesNoQuestion).toBe("Đi hông?");
     expect(merged.siteName).toBe(DEFAULT_CONTENT.siteName);
   });
 });

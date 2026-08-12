@@ -62,10 +62,15 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
  * Merge giá trị lưu trong DB lên default (shallow theo field cấp 1).
  * Admin luôn lưu nguyên object nên chỉ cần shallow merge — mục đích chính là
  * forward-compat: thêm field mới vào code thì bản ghi DB cũ không làm thiếu field.
+ * Field null/undefined trong DB bị BỎ QUA (fallback default) — type không cho
+ * null nên không để dữ liệu bẩn (sửa DB tay) đè default thành null rồi crash runtime.
  */
 export function mergeWithDefaults<T extends object>(defaults: T, stored: unknown): T {
   if (stored === null || typeof stored !== "object" || Array.isArray(stored)) {
     return defaults;
   }
-  return { ...defaults, ...(stored as Partial<T>) };
+  const cleaned = Object.fromEntries(
+    Object.entries(stored).filter(([, value]) => value !== null && value !== undefined)
+  );
+  return { ...defaults, ...(cleaned as Partial<T>) };
 }
