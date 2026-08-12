@@ -1,3 +1,4 @@
+import type { DayAvailability } from "./services/schedule";
 import type { StepChoice } from "./types";
 
 /**
@@ -64,4 +65,21 @@ export function parseFlowState(raw: string | null): FlowState {
     // JSON hỏng — coi như chưa có state
   }
   return INITIAL_FLOW_STATE;
+}
+
+/**
+ * Đối chiếu state khôi phục với calendar hiện tại: ngày đã chọn không còn
+ * hợp lệ (quá khứ / host vừa đánh bận / đổi rule) → bỏ ngày + giờ; giờ không
+ * còn trong danh sách slot của ngày → bỏ giờ.
+ */
+export function sanitizeFlowState(state: FlowState, days: DayAvailability[]): FlowState {
+  if (state.date === null) return state;
+  const day = days.find((d) => d.date === state.date);
+  if (!day || day.disabled) {
+    return { ...state, date: null, slot: null };
+  }
+  if (state.slot !== null && !day.slots.includes(state.slot)) {
+    return { ...state, slot: null };
+  }
+  return state;
 }

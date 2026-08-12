@@ -5,7 +5,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Mascot, type MascotExpression } from "@/components/Mascot";
 import { Step0Landing } from "@/components/steps/Step0Landing";
 import { Step1YesNo } from "@/components/steps/Step1YesNo";
-import { FLOW_STORAGE_KEY, parseFlowState, type FlowState } from "@/lib/flow-state";
+import { Step2Schedule } from "@/components/steps/Step2Schedule";
+import {
+  FLOW_STORAGE_KEY,
+  parseFlowState,
+  sanitizeFlowState,
+  type FlowState,
+} from "@/lib/flow-state";
+import type { DayAvailability } from "@/lib/services/schedule";
 import type { ContentConfig } from "@/lib/types";
 
 /** Sau khoảng im lặng này (ms) mascot chuyển sang ngủ */
@@ -15,6 +22,8 @@ const HAPPY_BURST_MS = 4_000;
 
 interface InviteFlowProps {
   content: ContentConfig;
+  /** Calendar đã tính sẵn server-side theo giờ VN */
+  days: DayAvailability[];
 }
 
 /**
@@ -22,9 +31,9 @@ interface InviteFlowProps {
  * Component này render client-only (ssr:false qua InviteFlowLoader) nên đọc
  * localStorage thẳng trong useState initializer — không cần effect hydrate.
  */
-export function InviteFlow({ content }: InviteFlowProps) {
+export function InviteFlow({ content, days }: InviteFlowProps) {
   const [state, setState] = useState<FlowState>(() =>
-    parseFlowState(window.localStorage.getItem(FLOW_STORAGE_KEY))
+    sanitizeFlowState(parseFlowState(window.localStorage.getItem(FLOW_STORAGE_KEY)), days)
   );
 
   useEffect(() => {
@@ -86,6 +95,23 @@ export function InviteFlow({ content }: InviteFlowProps) {
     setState((prev) => ({ ...prev, noDodgeCount: prev.noDodgeCount + 1 }));
   }, []);
 
+  const handlePickDate = useCallback(
+    (date: string) => {
+      // đổi ngày → slot cũ vô nghĩa, reset
+      update({ date, slot: null });
+    },
+    [update]
+  );
+
+  const handlePickSlot = useCallback(
+    (slot: string) => {
+      update({ slot });
+      celebrate();
+      scrollTo("step-food");
+    },
+    [update, celebrate, scrollTo]
+  );
+
   return (
     <main className="relative flex-1 pb-24">
       <Step0Landing
@@ -109,15 +135,25 @@ export function InviteFlow({ content }: InviteFlowProps) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mx-auto w-full max-w-xl px-5 py-8 text-center"
+            className="mx-auto w-full max-w-xl px-5 pt-6 text-center"
           >
             <p className="font-display text-xl font-bold text-olive">
               Proposal approved 🎉 Cảm ơn {content.guestName}!
             </p>
-            {/* các bước tiếp theo (lịch, quán, phim...) gắn vào đây ở phase sau */}
           </motion.div>
         )}
       </AnimatePresence>
+
+      {state.approved && (
+        <Step2Schedule
+          days={days}
+          selectedDate={state.date}
+          selectedSlot={state.slot}
+          onPickDate={handlePickDate}
+          onPickSlot={handlePickSlot}
+        />
+      )}
+      {/* các bước tiếp theo (quán ăn, phim, cafe...) gắn vào đây ở phase sau */}
 
       {/* Mascot góc màn hình — thay cho cursor trên mobile, đổi biểu cảm theo tương tác */}
       <div className="pointer-events-none fixed bottom-3 right-3 z-40 md:hidden">

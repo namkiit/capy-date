@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Mascot } from "@/components/Mascot";
+import type { DayAvailability } from "@/lib/services/schedule";
 import type { ContentConfig } from "@/lib/types";
 
 /**
@@ -23,8 +24,9 @@ const InviteFlow = dynamic(
 
 interface InviteFlowLoaderProps {
   content: ContentConfig;
+  days: DayAvailability[];
 }
 
-export function InviteFlowLoader({ content }: InviteFlowLoaderProps) {
-  return <InviteFlow content={content} />;
+export function InviteFlowLoader({ content, days }: InviteFlowLoaderProps) {
+  return <InviteFlow content={content} days={days} />;
 }
