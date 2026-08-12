@@ -1,19 +1,8 @@
 import { Resend } from "resend";
+import { describeChoice } from "@/lib/choice-label";
 import type { SubmissionRow } from "@/lib/db/schema";
-import type { StepChoice } from "@/lib/types";
 
 /** Notify host qua email (Resend) khi có submission mới */
-
-function choiceText(choice: StepChoice): string {
-  switch (choice.kind) {
-    case "option":
-      return choice.optionName;
-    case "surprise":
-      return "🎲 Surprise — em nhờ anh chọn";
-    case "skip":
-      return "— (bỏ qua)";
-  }
-}
 
 function escapeHtml(text: string): string {
   return text
@@ -35,9 +24,9 @@ export async function notifySubmission(submission: SubmissionRow): Promise<void>
   const rows: Array<[string, string]> = [
     ["📅 Ngày", p.date],
     ["⏰ Giờ", p.slot],
-    ["🍜 Ăn", choiceText(p.food)],
-    ["🎬 Phim", choiceText(p.movie)],
-    ["🧋 Cafe", choiceText(p.cafe)],
+    ["🍜 Ăn", describeChoice(p.food)],
+    ["🎬 Phim", describeChoice(p.movie)],
+    ["🧋 Cafe", describeChoice(p.cafe)],
     ["✨ Vibe", p.vibe ?? "—"],
     ["📝 Feedback", p.feedback ?? "—"],
     ["🙅 Số lần bấm hụt nút No", String(p.noDodgeCount)],
