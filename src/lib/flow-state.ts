@@ -1,5 +1,5 @@
 import type { DayAvailability } from "./services/schedule";
-import type { StepChoice } from "./types";
+import type { OptionType, StepChoice } from "./types";
 
 /**
  * State của user flow, persist vào localStorage để reload không mất lựa chọn.
@@ -82,4 +82,35 @@ export function sanitizeFlowState(state: FlowState, days: DayAvailability[]): Fl
     return { ...state, slot: null };
   }
   return state;
+}
+
+interface ChoiceContext {
+  /** Danh sách id option đang active theo loại */
+  activeIds: Record<OptionType, number[]>;
+  allowSkipMovie: boolean;
+  allowSkipCafe: boolean;
+}
+
+function sanitizeChoice(
+  choice: StepChoice | null,
+  activeIds: number[],
+  allowSkip: boolean
+): StepChoice | null {
+  if (choice === null) return null;
+  if (choice.kind === "option" && !activeIds.includes(choice.optionId)) return null;
+  if (choice.kind === "skip" && !allowSkip) return null;
+  return choice;
+}
+
+/**
+ * Đối chiếu lựa chọn quán/phim/cafe đã lưu với dữ liệu hiện tại:
+ * option bị host xóa/tắt → bỏ lựa chọn; skip không còn được phép → bỏ.
+ */
+export function sanitizeChoices(state: FlowState, ctx: ChoiceContext): FlowState {
+  return {
+    ...state,
+    food: sanitizeChoice(state.food, ctx.activeIds.food, false),
+    movie: sanitizeChoice(state.movie, ctx.activeIds.movie, ctx.allowSkipMovie),
+    cafe: sanitizeChoice(state.cafe, ctx.activeIds.cafe, ctx.allowSkipCafe),
+  };
 }

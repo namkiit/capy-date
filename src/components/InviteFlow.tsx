@@ -3,17 +3,21 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Mascot, type MascotExpression } from "@/components/Mascot";
+import { OptionPicker } from "@/components/OptionPicker";
 import { Step0Landing } from "@/components/steps/Step0Landing";
 import { Step1YesNo } from "@/components/steps/Step1YesNo";
 import { Step2Schedule } from "@/components/steps/Step2Schedule";
+import { SectionShell } from "@/components/steps/SectionShell";
+import type { OptionsByType } from "@/lib/db/queries";
 import {
   FLOW_STORAGE_KEY,
   parseFlowState,
+  sanitizeChoices,
   sanitizeFlowState,
   type FlowState,
 } from "@/lib/flow-state";
 import type { DayAvailability } from "@/lib/services/schedule";
-import type { ContentConfig } from "@/lib/types";
+import type { ContentConfig, StepChoice } from "@/lib/types";
 
 /** Sau khoảng im lặng này (ms) mascot chuyển sang ngủ */
 const SLEEPY_AFTER_MS = 45_000;
@@ -24,6 +28,7 @@ interface InviteFlowProps {
   content: ContentConfig;
   /** Calendar đã tính sẵn server-side theo giờ VN */
   days: DayAvailability[];
+  options: OptionsByType;
 }
 
 /**
@@ -31,9 +36,20 @@ interface InviteFlowProps {
  * Component này render client-only (ssr:false qua InviteFlowLoader) nên đọc
  * localStorage thẳng trong useState initializer — không cần effect hydrate.
  */
-export function InviteFlow({ content, days }: InviteFlowProps) {
+export function InviteFlow({ content, days, options }: InviteFlowProps) {
   const [state, setState] = useState<FlowState>(() =>
-    sanitizeFlowState(parseFlowState(window.localStorage.getItem(FLOW_STORAGE_KEY)), days)
+    sanitizeChoices(
+      sanitizeFlowState(parseFlowState(window.localStorage.getItem(FLOW_STORAGE_KEY)), days),
+      {
+        activeIds: {
+          food: options.food.map((o) => o.id),
+          movie: options.movie.map((o) => o.id),
+          cafe: options.cafe.map((o) => o.id),
+        },
+        allowSkipMovie: content.allowSkipMovie,
+        allowSkipCafe: content.allowSkipCafe,
+      }
+    )
   );
 
   useEffect(() => {
@@ -112,6 +128,18 @@ export function InviteFlow({ content, days }: InviteFlowProps) {
     [update, celebrate, scrollTo]
   );
 
+  const handleChoose = useCallback(
+    (field: "food" | "movie" | "cafe", nextSectionId: string) =>
+      (choice: StepChoice) => {
+        setState((prev) => {
+          // chỉ tự cuộn khi chọn lần đầu — đổi lựa chọn sau đó không kéo user đi
+          if (prev[field] === null) scrollTo(nextSectionId);
+          return { ...prev, [field]: choice };
+        });
+      },
+    [scrollTo]
+  );
+
   return (
     <main className="relative flex-1 pb-24">
       <Step0Landing
@@ -153,7 +181,50 @@ export function InviteFlow({ content, days }: InviteFlowProps) {
           onPickSlot={handlePickSlot}
         />
       )}
-      {/* các bước tiếp theo (quán ăn, phim, cafe...) gắn vào đây ở phase sau */}
+
+      {state.slot !== null && (
+        <SectionShell id="step-food" eyebrow="Hạng mục 03 — Dining" title="Ăn gì đây? 🍜">
+          <OptionPicker
+            options={options.food}
+            choice={state.food}
+            chooseLabel="Chọn quán này 🤝"
+            surpriseLabel="Làm em ngạc nhiên đi 🎲"
+            skipLabel={null}
+            onChoose={handleChoose("food", "step-movie")}
+          />
+        </SectionShell>
+      )}
+
+      {state.food !== null && (
+        <SectionShell
+          id="step-movie"
+          eyebrow="Hạng mục 04 — Entertainment"
+          title="Xem phim gì? 🎬"
+        >
+          <OptionPicker
+            options={options.movie}
+            choice={state.movie}
+            chooseLabel="Chốt phim này 🎬"
+            surpriseLabel="Để anh chọn phim bí mật 🎲"
+            skipLabel={content.allowSkipMovie ? "Hôm đó không xem phim cũng được" : null}
+            onChoose={handleChoose("movie", "step-cafe")}
+          />
+        </SectionShell>
+      )}
+
+      {state.movie !== null && (
+        <SectionShell id="step-cafe" eyebrow="Hạng mục 05 — Chill" title="Cafe chốt hạ 🧋">
+          <OptionPicker
+            options={options.cafe}
+            choice={state.cafe}
+            chooseLabel="Chọn quán này 🧋"
+            surpriseLabel="Quán bí mật của anh 🎲"
+            skipLabel={content.allowSkipCafe ? "Hôm đó bỏ qua cafe cũng được" : null}
+            onChoose={handleChoose("cafe", "step-timeline")}
+          />
+        </SectionShell>
+      )}
+      {/* các bước tiếp theo (timeline, dresscode, submit) gắn vào đây ở phase sau */}
 
       {/* Mascot góc màn hình — thay cho cursor trên mobile, đổi biểu cảm theo tương tác */}
       <div className="pointer-events-none fixed bottom-3 right-3 z-40 md:hidden">

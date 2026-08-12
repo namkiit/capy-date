@@ -3,6 +3,7 @@ import {
   FLOW_STATE_VERSION,
   INITIAL_FLOW_STATE,
   parseFlowState,
+  sanitizeChoices,
   sanitizeFlowState,
   type FlowState,
 } from "./flow-state";
@@ -68,5 +69,38 @@ describe("sanitizeFlowState", () => {
     const state = sanitizeFlowState(stateWith({ date: "2026-08-13", slot: "21:00" }), days);
     expect(state.date).toBe("2026-08-13");
     expect(state.slot).toBeNull();
+  });
+});
+
+describe("sanitizeChoices", () => {
+  const ctx = {
+    activeIds: { food: [1, 2], movie: [10], cafe: [20] },
+    allowSkipMovie: true,
+    allowSkipCafe: false,
+  };
+
+  function stateWith(patch: Partial<FlowState>): FlowState {
+    return { ...INITIAL_FLOW_STATE, ...patch };
+  }
+
+  it("giữ lựa chọn còn hợp lệ (option active, surprise, skip được phép)", () => {
+    const state = stateWith({
+      food: { kind: "option", optionId: 1, optionName: "Quán nướng" },
+      movie: { kind: "skip" },
+      cafe: { kind: "surprise" },
+    });
+    expect(sanitizeChoices(state, ctx)).toEqual(state);
+  });
+
+  it("bỏ lựa chọn trỏ tới option đã bị xóa/tắt", () => {
+    const state = stateWith({
+      food: { kind: "option", optionId: 99, optionName: "Quán đã xóa" },
+    });
+    expect(sanitizeChoices(state, ctx).food).toBeNull();
+  });
+
+  it("bỏ skip khi config không còn cho phép skip", () => {
+    const state = stateWith({ cafe: { kind: "skip" } });
+    expect(sanitizeChoices(state, ctx).cafe).toBeNull();
   });
 });

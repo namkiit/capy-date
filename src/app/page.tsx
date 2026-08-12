@@ -1,4 +1,5 @@
 import { InviteFlowLoader } from "@/components/InviteFlowLoader";
+import { getActiveOptionsGrouped } from "@/lib/db/queries";
 import { getAppConfig } from "@/lib/services/app-config";
 import { buildCalendar, getTodayInVietnam } from "@/lib/services/schedule";
 
@@ -6,7 +7,7 @@ import { buildCalendar, getTodayInVietnam } from "@/lib/services/schedule";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const config = await getAppConfig();
+  const [config, options] = await Promise.all([getAppConfig(), getActiveOptionsGrouped()]);
   const days = buildCalendar(config.schedule, getTodayInVietnam());
-  return <InviteFlowLoader content={config.content} days={days} />;
+  return <InviteFlowLoader content={config.content} days={days} options={options} />;
 }

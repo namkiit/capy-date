@@ -39,6 +39,22 @@ export async function getActiveOptions(type: OptionType): Promise<OptionRow[]> {
     .orderBy(asc(options.sortOrder), asc(options.id));
 }
 
+export type OptionsByType = Record<OptionType, OptionRow[]>;
+
+/** Toàn bộ option đang active, gom theo loại — dữ liệu cho user flow */
+export async function getActiveOptionsGrouped(): Promise<OptionsByType> {
+  const rows = await db
+    .select()
+    .from(options)
+    .where(eq(options.isActive, true))
+    .orderBy(asc(options.sortOrder), asc(options.id));
+  const grouped: OptionsByType = { food: [], movie: [], cafe: [] };
+  for (const row of rows) {
+    grouped[row.type].push(row);
+  }
+  return grouped;
+}
+
 export async function getAllOptions(): Promise<OptionRow[]> {
   return db
     .select()

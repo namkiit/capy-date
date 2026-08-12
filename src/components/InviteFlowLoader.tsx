@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Mascot } from "@/components/Mascot";
+import type { OptionsByType } from "@/lib/db/queries";
 import type { DayAvailability } from "@/lib/services/schedule";
 import type { ContentConfig } from "@/lib/types";
 
@@ -25,8 +26,9 @@ const InviteFlow = dynamic(
 interface InviteFlowLoaderProps {
   content: ContentConfig;
   days: DayAvailability[];
+  options: OptionsByType;
 }
 
-export function InviteFlowLoader({ content, days }: InviteFlowLoaderProps) {
-  return <InviteFlow content={content} days={days} />;
+export function InviteFlowLoader({ content, days, options }: InviteFlowLoaderProps) {
+  return <InviteFlow content={content} days={days} options={options} />;
 }
