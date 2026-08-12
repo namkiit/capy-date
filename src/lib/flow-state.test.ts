@@ -38,6 +38,21 @@ describe("parseFlowState", () => {
     expect(parseFlowState('"a string"')).toEqual(INITIAL_FLOW_STATE);
     expect(parseFlowState("[1,2]")).toEqual(INITIAL_FLOW_STATE);
   });
+
+  it("field thừa không có trong FlowState không phá vỡ việc parse", () => {
+    const stored = JSON.stringify({
+      version: FLOW_STATE_VERSION,
+      approved: true,
+      date: "2026-08-15",
+      unknownFieldFromOlderVersion: "giá trị lạ",
+    });
+
+    const state = parseFlowState(stored);
+
+    expect(state.approved).toBe(true);
+    expect(state.date).toBe("2026-08-15");
+    expect(state.slot).toBeNull();
+  });
 });
 
 describe("sanitizeFlowState", () => {
@@ -69,6 +84,27 @@ describe("sanitizeFlowState", () => {
     const state = sanitizeFlowState(stateWith({ date: "2026-08-13", slot: "21:00" }), days);
     expect(state.date).toBe("2026-08-13");
     expect(state.slot).toBeNull();
+  });
+
+  it("mất ngày/slot thì media plan đã duyệt phải duyệt lại (timelineConfirmed reset)", () => {
+    const dateGone = sanitizeFlowState(
+      stateWith({ date: "2026-08-01", slot: "19:00", timelineConfirmed: true }),
+      days
+    );
+    expect(dateGone.timelineConfirmed).toBe(false);
+
+    const slotGone = sanitizeFlowState(
+      stateWith({ date: "2026-08-13", slot: "21:00", timelineConfirmed: true }),
+      days
+    );
+    expect(slotGone.timelineConfirmed).toBe(false);
+
+    // ngày + giờ còn hợp lệ → giữ nguyên trạng thái đã duyệt
+    const intact = sanitizeFlowState(
+      stateWith({ date: "2026-08-13", slot: "19:00", timelineConfirmed: true }),
+      days
+    );
+    expect(intact.timelineConfirmed).toBe(true);
   });
 });
 
@@ -102,5 +138,57 @@ describe("sanitizeChoices", () => {
   it("bỏ skip khi config không còn cho phép skip", () => {
     const state = stateWith({ cafe: { kind: "skip" } });
     expect(sanitizeChoices(state, ctx).cafe).toBeNull();
+  });
+
+  it("option bị xóa thì timelineConfirmed reset về false, còn nguyên vẹn thì giữ", () => {
+    const lost = sanitizeChoices(
+      stateWith({
+        food: { kind: "option", optionId: 99, optionName: "Quán đã xóa" },
+        timelineConfirmed: true,
+      }),
+      ctx
+    );
+    expect(lost.timelineConfirmed).toBe(false);
+
+    const intact = sanitizeChoices(
+      stateWith({
+        food: { kind: "option", optionId: 1, optionName: "Quán nướng" },
+        movie: { kind: "skip" },
+        cafe: { kind: "surprise" },
+        timelineConfirmed: true,
+      }),
+      ctx
+    );
+    expect(intact.timelineConfirmed).toBe(true);
+  });
+});
+
+describe("sanitizeFlowState + sanitizeChoices kết hợp", () => {
+  const days: DayAvailability[] = [
+    { date: "2026-08-13", isoWeekday: 4, slots: ["19:00"], disabled: false },
+  ];
+  const ctx = {
+    activeIds: { food: [1], movie: [10], cafe: [20] },
+    allowSkipMovie: true,
+    allowSkipCafe: false,
+  };
+
+  it("dọn sạch cả ngày hỏng lẫn option hỏng khi xảy ra đồng thời", () => {
+    const state: FlowState = {
+      ...INITIAL_FLOW_STATE,
+      date: "2026-08-01", // không còn trong calendar
+      slot: "19:00",
+      food: { kind: "option", optionId: 99, optionName: "Quán đã xóa" }, // option hỏng
+      movie: { kind: "skip" }, // allowSkipMovie true — hợp lệ
+      cafe: { kind: "skip" }, // allowSkipCafe false — hỏng
+    };
+
+    const sanitized = sanitizeChoices(sanitizeFlowState(state, days), ctx);
+
+    expect(sanitized.date).toBeNull();
+    expect(sanitized.slot).toBeNull();
+    expect(sanitized.food).toBeNull();
+    expect(sanitized.movie).toEqual({ kind: "skip" });
+    expect(sanitized.cafe).toBeNull();
   });
 });

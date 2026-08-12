@@ -79,10 +79,12 @@ export function sanitizeFlowState(state: FlowState, days: DayAvailability[]): Fl
   if (state.date === null) return state;
   const day = days.find((d) => d.date === state.date);
   if (!day || day.disabled) {
-    return { ...state, date: null, slot: null };
+    // mất ngày → media plan cũ vô nghĩa, phải duyệt lại (nếu không các bước sau
+    // vẫn hiển thị và nút submit thành nút chết)
+    return { ...state, date: null, slot: null, timelineConfirmed: false };
   }
   if (state.slot !== null && !day.slots.includes(state.slot)) {
-    return { ...state, slot: null };
+    return { ...state, slot: null, timelineConfirmed: false };
   }
   return state;
 }
@@ -110,10 +112,19 @@ function sanitizeChoice(
  * option bị host xóa/tắt → bỏ lựa chọn; skip không còn được phép → bỏ.
  */
 export function sanitizeChoices(state: FlowState, ctx: ChoiceContext): FlowState {
+  const food = sanitizeChoice(state.food, ctx.activeIds.food, false);
+  const movie = sanitizeChoice(state.movie, ctx.activeIds.movie, ctx.allowSkipMovie);
+  const cafe = sanitizeChoice(state.cafe, ctx.activeIds.cafe, ctx.allowSkipCafe);
+  // mất lựa chọn nào đó → media plan đã duyệt không còn đúng, bắt duyệt lại
+  const lostChoice =
+    (state.food !== null && food === null) ||
+    (state.movie !== null && movie === null) ||
+    (state.cafe !== null && cafe === null);
   return {
     ...state,
-    food: sanitizeChoice(state.food, ctx.activeIds.food, false),
-    movie: sanitizeChoice(state.movie, ctx.activeIds.movie, ctx.allowSkipMovie),
-    cafe: sanitizeChoice(state.cafe, ctx.activeIds.cafe, ctx.allowSkipCafe),
+    food,
+    movie,
+    cafe,
+    timelineConfirmed: lostChoice ? false : state.timelineConfirmed,
   };
 }

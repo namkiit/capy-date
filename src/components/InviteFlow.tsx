@@ -120,8 +120,9 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
 
   const handlePickDate = useCallback(
     (date: string) => {
-      // đổi ngày → slot cũ vô nghĩa, reset
-      update({ date, slot: null });
+      // đổi ngày → slot cũ vô nghĩa; media plan đã duyệt cũng phải duyệt lại
+      // (không reset thì các bước sau vẫn hiện trong khi slot đã trống)
+      update({ date, slot: null, timelineConfirmed: false });
     },
     [update]
   );
@@ -170,9 +171,27 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
   const [submitError, setSubmitError] = useState<string | null>(null);
   // mở lại site sau khi đã chốt deal → hiện thẳng thiệp
   const [cardOpen, setCardOpen] = useState(() => state.submittedAt !== null);
+  // guard double-tap bằng ref: state `submitting` trong closure có thể stale
+  const submitInFlight = useRef(false);
 
   const handleSubmit = useCallback(async () => {
-    if (!state.date || !state.slot || !state.food || !state.movie || !state.cafe) return;
+    if (submitInFlight.current) return;
+
+    // State có thể thiếu dữ liệu dù nút submit đang hiện (host vừa đổi config).
+    // Không bao giờ return im lặng — báo lỗi và cuộn tới bước còn thiếu.
+    const reportMissing = (sectionId: string) => {
+      setSubmitError(
+        "Có bước bị thiếu lựa chọn (lịch vừa được cập nhật 😅) — kéo lên chọn lại giúp anh nha"
+      );
+      scrollTo(sectionId);
+    };
+    const { date, slot, food, movie, cafe } = state;
+    if (date === null || slot === null) return reportMissing("step-schedule");
+    if (food === null) return reportMissing("step-food");
+    if (movie === null) return reportMissing("step-movie");
+    if (cafe === null) return reportMissing("step-cafe");
+
+    submitInFlight.current = true;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -180,11 +199,11 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          date: state.date,
-          slot: state.slot,
-          food: state.food,
-          movie: state.movie,
-          cafe: state.cafe,
+          date,
+          slot,
+          food,
+          movie,
+          cafe,
           vibe: state.vibe,
           feedback: state.feedback,
           noDodgeCount: state.noDodgeCount,
@@ -202,9 +221,10 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
     } catch {
       setSubmitError("Không kết nối được server — kiểm tra mạng rồi thử lại nha 🥲");
     } finally {
+      submitInFlight.current = false;
       setSubmitting(false);
     }
-  }, [state, update, celebrate]);
+  }, [state, update, celebrate, scrollTo]);
 
   const allChosen = state.slot !== null && state.food !== null && state.movie !== null && state.cafe !== null;
 
