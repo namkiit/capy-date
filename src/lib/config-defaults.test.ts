@@ -22,4 +22,14 @@ describe("mergeWithDefaults", () => {
     expect(mergeWithDefaults(DEFAULT_SCHEDULE, "hong hop le")).toEqual(DEFAULT_SCHEDULE);
     expect(mergeWithDefaults(DEFAULT_SCHEDULE, 42)).toEqual(DEFAULT_SCHEDULE);
   });
+
+  it("field null trong DB đè default thành null thay vì fallback — khóa hành vi hiện tại", () => {
+    const stored = { guestName: null };
+
+    const merged = mergeWithDefaults(DEFAULT_CONTENT, stored);
+
+    expect(merged.guestName).toBeNull();
+    // field khác không có trong DB vẫn giữ default
+    expect(merged.siteName).toBe(DEFAULT_CONTENT.siteName);
+  });
 });

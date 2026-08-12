@@ -102,4 +102,38 @@ describe("validateSubmission", () => {
     );
     expect(payload.food.kind).toBe("surprise");
   });
+
+  it("feedback toàn khoảng trắng chuẩn hóa thành null", () => {
+    const payload = validateSubmission(makeInput({ feedback: "   \n\t  " }), ctx);
+
+    expect(payload.feedback).toBeNull();
+  });
+
+  it("chọn option theo id vẫn lỗi khi danh sách option đang rỗng", () => {
+    const emptyCtx: SubmissionContext = { ...ctx, optionsById: new Map() };
+
+    expect(() =>
+      validateSubmission(
+        makeInput({ food: { kind: "option", optionId: 1, optionName: "x" } }),
+        emptyCtx
+      )
+    ).toThrow(SubmissionValidationError);
+  });
+
+  it("surprise/skip vẫn hợp lệ dù danh sách option đang rỗng", () => {
+    const emptyCtx: SubmissionContext = { ...ctx, optionsById: new Map() };
+
+    const payload = validateSubmission(
+      makeInput({
+        food: { kind: "surprise" },
+        movie: { kind: "skip" }, // allowSkipMovie true trong ctx gốc
+        cafe: { kind: "surprise" },
+      }),
+      emptyCtx
+    );
+
+    expect(payload.food).toEqual({ kind: "surprise" });
+    expect(payload.movie).toEqual({ kind: "skip" });
+    expect(payload.cafe).toEqual({ kind: "surprise" });
+  });
 });

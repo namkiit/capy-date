@@ -63,4 +63,25 @@ describe("buildTimeline", () => {
     // đón 22:00, ăn 22:30, phim 00:00, cafe 02:15, wrap 03:15
     expect(late.map((i) => i.time)).toEqual(["22:00", "22:30", "00:00", "02:15", "03:15"]);
   });
+
+  it("slot bắt đầu 23:xx thì cả phim lẫn cafe đều wrap qua nửa đêm", () => {
+    const items = build({ slot: "23:15" });
+
+    // đón 22:45, ăn 23:15, phim 00:45, cafe 03:00, wrap 04:00
+    expect(items.map((i) => i.time)).toEqual(["22:45", "23:15", "00:45", "03:00", "04:00"]);
+  });
+
+  it("durations toàn 0 thì mọi mốc trùng giờ slot, không throw", () => {
+    const items = buildTimeline({
+      slot: "19:00",
+      food: foodChoice,
+      movie: movieChoice,
+      cafe: cafeChoice,
+      durations: { pickupMinutes: 0, foodMinutes: 0, movieMinutes: 0, cafeMinutes: 0 },
+      pickupPlace: "cổng nhà em",
+    });
+
+    expect(items).toHaveLength(5);
+    expect(items.every((i) => i.time === "19:00")).toBe(true);
+  });
 });

@@ -76,4 +76,32 @@ describe("buildCalendar", () => {
     expect(buildCalendar(makeSchedule({ weeksAhead: 0 }), TODAY)).toHaveLength(7);
     expect(buildCalendar(makeSchedule({ weeksAhead: 99 }), TODAY)).toHaveLength(56);
   });
+
+  it("ngày vừa bận vừa có override thì busy thắng, override bị bỏ qua", () => {
+    const schedule = makeSchedule({
+      busyDates: ["2026-08-15"],
+      dateSlotOverrides: { "2026-08-15": ["21:30"] },
+    });
+
+    const days = buildCalendar(schedule, TODAY);
+    const day = days.find((d) => d.date === "2026-08-15");
+
+    expect(day?.slots).toEqual([]);
+    expect(day?.disabled).toBe(true);
+  });
+
+  it("weekendSlots rỗng khiến toàn bộ cuối tuần bị disable, ngày trong tuần không ảnh hưởng", () => {
+    const schedule = makeSchedule({ weekendSlots: [] });
+
+    const days = buildCalendar(schedule, TODAY);
+    const saturday = days.find((d) => d.date === "2026-08-15");
+    const sunday = days.find((d) => d.date === "2026-08-16");
+    const weekday = days.find((d) => d.date === "2026-08-13");
+
+    expect(saturday?.slots).toEqual([]);
+    expect(saturday?.disabled).toBe(true);
+    expect(sunday?.slots).toEqual([]);
+    expect(sunday?.disabled).toBe(true);
+    expect(weekday?.disabled).toBe(false);
+  });
 });
