@@ -49,7 +49,12 @@ export function Step1YesNo({
 
   const exhausted = noDodgeCount >= MAX_NO_DODGES;
   const noScale = Math.max(0.55, 1 - noDodgeCount * 0.1);
-  const yesScale = Math.min(1.3, 1 + noDodgeCount * 0.06);
+  /*
+   * Phóng to bằng transform không chiếm chỗ trong layout. Lúc nút No còn bay
+   * (position: fixed) thì không sao, nhưng khi cạn lượt nó quay lại nằm cạnh
+   * nút Yes — giữ scale 1 để phần phình ra không đè lên nút bên cạnh.
+   */
+  const yesScale = exhausted ? 1 : Math.min(1.3, 1 + noDodgeCount * 0.06);
 
   const captionsSafe = noCaptions.length >= 2 ? noCaptions : ["Không", "Option này đã hết hàng"];
   const activeCaption = captionsSafe[Math.min(noDodgeCount, captionsSafe.length - 2)];
