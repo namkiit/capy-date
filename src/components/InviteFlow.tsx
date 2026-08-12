@@ -4,6 +4,11 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { InviteCard } from "@/components/InviteCard";
 import { Mascot, type MascotExpression } from "@/components/Mascot";
+import {
+  MUSIC_CREDIT,
+  MusicPlayer,
+  type MusicPlayerHandle,
+} from "@/components/MusicPlayer";
 import { OptionPicker } from "@/components/OptionPicker";
 import { Step0Landing } from "@/components/steps/Step0Landing";
 import { Step1YesNo } from "@/components/steps/Step1YesNo";
@@ -100,7 +105,11 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
     });
   }, []);
 
+  const musicRef = useRef<MusicPlayerHandle>(null);
+
   const handleOpenBrief = useCallback(() => {
+    // gọi ngay trong handler của cú bấm để trình duyệt cho phép phát nhạc
+    musicRef.current?.start();
     update({ briefOpened: true });
     scrollTo("step-approve");
   }, [update, scrollTo]);
@@ -365,10 +374,16 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
         )}
       </AnimatePresence>
 
+      {/* Nhạc nền bật từ cú bấm "Xem brief"; sau đó khách tự tắt/bật bằng nút loa */}
+      <MusicPlayer ref={musicRef} />
+
       {/* Mascot góc màn hình — thay cho cursor trên mobile, đổi biểu cảm theo tương tác */}
       <div className="pointer-events-none fixed bottom-3 right-3 z-40 md:hidden">
         <Mascot expression={mood} alive className="w-20 drop-shadow-sm" />
       </div>
+
+      {/* CC BY 4.0 yêu cầu ghi công tác giả nhạc nền */}
+      <p className="pb-3 pt-8 text-center text-[10px] text-ink-soft/50">🎵 {MUSIC_CREDIT}</p>
     </main>
   );
 }
