@@ -15,7 +15,7 @@ export const DEFAULT_CONTENT: ContentConfig = {
   hostName: "Anh",
   guestName: "Em",
   landingIntro:
-    "Kính gửi em — phòng Marketing của trái tim anh xin gửi proposal cho campaign sắp tới. Brief chi tiết bên dưới, mong được em approve trước deadline 😌",
+    "Phòng Marketing của trái tim anh xin gửi proposal cho campaign sắp tới. Brief chi tiết bên dưới, mong được em approve trước deadline 😌",
   yesNoQuestion: "Em có duyệt proposal đi chơi với anh không?",
   noButtonCaptions: [
     "Không",
