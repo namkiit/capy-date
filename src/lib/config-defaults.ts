@@ -47,6 +47,7 @@ export const DEFAULT_SCHEDULE: ScheduleConfig = {
 
 export const DEFAULT_DURATIONS: TimelineDurations = {
   pickupMinutes: 30,
+  activityMinutes: 90,
   foodMinutes: 90,
   movieMinutes: 135,
   cafeMinutes: 60,

@@ -1,6 +1,12 @@
 /** Domain models dùng chung toàn app — không dùng any, model tường minh */
 
-export type OptionType = "food" | "movie" | "cafe";
+/**
+ * Các loại option, theo thứ tự bước chọn trong buổi hẹn: chơi → ăn → phim → cafe.
+ * Kiểu suy từ mảng nên thêm loại mới chỉ sửa một chỗ (zod, drizzle, admin cùng dùng mảng này).
+ */
+export const OPTION_TYPES = ["activity", "food", "movie", "cafe"] as const;
+
+export type OptionType = (typeof OPTION_TYPES)[number];
 
 /** Thông tin bổ sung riêng theo loại option (hiện chỉ phim dùng) */
 export interface OptionExtra {
@@ -20,8 +26,13 @@ export interface SubmissionPayload {
   version: 1;
   /** YYYY-MM-DD */
   date: string;
-  /** HH:mm */
+  /** HH:mm — giờ bắt đầu buổi hẹn (giờ đi chơi) */
   slot: string;
+  /**
+   * Hoạt động vui chơi. Optional vì submission lưu trước khi có bước này không có field;
+   * submission mới luôn có (schema ở /api/submit bắt buộc).
+   */
+  activity?: StepChoice;
   food: StepChoice;
   movie: StepChoice;
   cafe: StepChoice;
@@ -48,6 +59,7 @@ export interface ScheduleConfig {
 /** Thời lượng từng hoạt động (phút) để generate timeline — config key "durations" */
 export interface TimelineDurations {
   pickupMinutes: number;
+  activityMinutes: number;
   foodMinutes: number;
   movieMinutes: number;
   cafeMinutes: number;

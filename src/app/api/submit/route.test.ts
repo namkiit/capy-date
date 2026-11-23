@@ -7,7 +7,7 @@ import type { SubmissionPayload } from "@/lib/types";
 vi.mock("@/lib/db/queries", () => ({
   getConfigValue: vi.fn(async () => null), // config trống → dùng default
   setConfigValue: vi.fn(async () => {}),
-  getActiveOptionsGrouped: vi.fn(async () => ({ food: [], movie: [], cafe: [] })),
+  getActiveOptionsGrouped: vi.fn(async () => ({ activity: [], food: [], movie: [], cafe: [] })),
   createSubmission: vi.fn(async (payload: SubmissionPayload) => ({
     id: 7,
     payload,
@@ -35,6 +35,7 @@ function validInput() {
   return {
     date: validDay?.date,
     slot: validDay?.slots[0],
+    activity: { kind: "surprise" },
     food: { kind: "surprise" },
     movie: { kind: "skip" }, // DEFAULT_CONTENT cho phép skip phim
     cafe: { kind: "surprise" },
@@ -72,6 +73,17 @@ describe("POST /api/submit", () => {
     const res = await POST(makeRequest({ hello: "world" }, ip));
     expect(res.status).toBe(400);
     expect(warnSpy).toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
+  it("thiếu activity hoặc activity skip → 400", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { activity: _omitted, ...withoutActivity } = validInput();
+    void _omitted;
+    expect((await POST(makeRequest(withoutActivity, ip))).status).toBe(400);
+    expect(
+      (await POST(makeRequest({ ...validInput(), activity: { kind: "skip" } }, ip))).status
+    ).toBe(400);
     warnSpy.mockRestore();
   });
 

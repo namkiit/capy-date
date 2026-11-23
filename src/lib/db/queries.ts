@@ -48,7 +48,7 @@ export async function getActiveOptionsGrouped(): Promise<OptionsByType> {
     .from(options)
     .where(eq(options.isActive, true))
     .orderBy(asc(options.sortOrder), asc(options.id));
-  const grouped: OptionsByType = { food: [], movie: [], cafe: [] };
+  const grouped: OptionsByType = { activity: [], food: [], movie: [], cafe: [] };
   for (const row of rows) {
     grouped[row.type].push(row);
   }

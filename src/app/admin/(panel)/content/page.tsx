@@ -167,10 +167,15 @@ export default function AdminContentPage() {
           Cho phép bỏ qua cafe
         </label>
       </div>
-      <div className="grid grid-cols-2 gap-x-4 sm:grid-cols-4">
+      <p className="mt-3 text-xs text-ink-soft">
+        Thứ tự buổi hẹn: đón → vui chơi → ăn → phim → cafe. Giờ khách chọn là giờ bắt đầu đi
+        chơi; giờ ăn = giờ đó + thời lượng vui chơi.
+      </p>
+      <div className="grid grid-cols-2 gap-x-4 sm:grid-cols-5">
         {(
           [
             ["pickupMinutes", "Đón (phút)"],
+            ["activityMinutes", "Vui chơi (phút)"],
             ["foodMinutes", "Ăn (phút)"],
             ["movieMinutes", "Phim (phút)"],
             ["cafeMinutes", "Cafe (phút)"],

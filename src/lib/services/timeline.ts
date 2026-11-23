@@ -14,8 +14,9 @@ export interface TimelineItem {
 }
 
 export interface TimelineInput {
-  /** Giờ bắt đầu (giờ ăn), HH:mm */
+  /** Giờ bắt đầu buổi hẹn = giờ đi chơi, HH:mm (giờ ăn = slot + activityMinutes) */
   slot: string;
+  activity: StepChoice;
   food: StepChoice;
   movie: StepChoice;
   cafe: StepChoice;
@@ -50,8 +51,15 @@ function choiceLabel(choice: StepChoice, surpriseLabel: string): string | null {
   }
 }
 
-function mealWord(slotMinutes: number): string {
-  const hour = slotMinutes / 60;
+const SURPRISE_ACTIVITY_LABEL = "hoạt động bí mật của anh 🤫";
+/** Trước giờ này (tính trong ngày) bữa ăn gọi là ăn khuya chứ không phải ăn sáng */
+const LATE_NIGHT_UNTIL_HOUR = 5;
+
+/** Chữ gọi bữa ăn theo giờ ăn thực tế; nhận phút cộng dồn nên phải wrap về trong ngày */
+function mealWord(mealMinutes: number): string {
+  const wrapped = ((mealMinutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  const hour = wrapped / 60;
+  if (hour < LATE_NIGHT_UNTIL_HOUR) return "Ăn khuya";
   if (hour < 10) return "Ăn sáng";
   if (hour < 14) return "Ăn trưa";
   if (hour < 17) return "Ăn xế";
@@ -59,7 +67,7 @@ function mealWord(slotMinutes: number): string {
 }
 
 export function buildTimeline(input: TimelineInput): TimelineItem[] {
-  const { slot, food, movie, cafe, durations, pickupPlace } = input;
+  const { slot, activity, food, movie, cafe, durations, pickupPlace } = input;
   const items: TimelineItem[] = [];
   const start = toMinutes(slot);
 
@@ -70,12 +78,17 @@ export function buildTimeline(input: TimelineInput): TimelineItem[] {
   });
 
   let cursor = start;
-  // food không cho skip nên nhánh ?? chỉ là type-safety, không phải flow thật
+  // activity và food không cho skip nên nhánh ?? chỉ là type-safety, không phải flow thật
+  const activityName =
+    choiceLabel(activity, SURPRISE_ACTIVITY_LABEL) ?? SURPRISE_ACTIVITY_LABEL;
+  items.push({ time: toHhmm(cursor), icon: "🎡", label: `Đi chơi: ${activityName}` });
+  cursor += durations.activityMinutes;
+
   const foodName = choiceLabel(food, SURPRISE_PLACE_LABEL) ?? SURPRISE_PLACE_LABEL;
   items.push({
     time: toHhmm(cursor),
     icon: "🍜",
-    label: `${mealWord(start)} tại ${foodName}`,
+    label: `${mealWord(cursor)} tại ${foodName}`,
   });
   cursor += durations.foodMinutes;
 

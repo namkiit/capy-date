@@ -24,6 +24,8 @@ export async function notifySubmission(submission: SubmissionRow): Promise<void>
   const rows: Array<[string, string]> = [
     ["📅 Ngày", p.date],
     ["⏰ Giờ", p.slot],
+    // submission lưu trước khi có bước vui chơi không có field này
+    ["🎡 Vui chơi", p.activity ? describeChoice(p.activity) : "—"],
     ["🍜 Ăn", describeChoice(p.food)],
     ["🎬 Phim", describeChoice(p.movie)],
     ["🧋 Cafe", describeChoice(p.cafe)],

@@ -148,7 +148,7 @@ export function Step2Schedule({
             className="mt-5"
           >
             <p className="text-sm font-semibold text-ink">
-              {formatDayLabel(selectedDay)} — mấy giờ đẹp nhất? ⏰
+              {formatDayLabel(selectedDay)} — mấy giờ mình bắt đầu đi chơi? ⏰
             </p>
             <div className="mt-2.5 flex flex-wrap gap-2">
               {selectedDay.slots.map((slot) => (

@@ -19,7 +19,7 @@ export function Step8Submit({
   onShowCard,
 }: Step8SubmitProps) {
   return (
-    <SectionShell id="step-submit" eyebrow="Hạng mục 08 — Sign-off" title="Chốt deal thôi! 🤝">
+    <SectionShell id="step-submit" eyebrow="Hạng mục 09 — Sign-off" title="Chốt deal thôi! 🤝">
       <p className="text-ink">
         Mọi hạng mục đã sẵn sàng. Bấm nút bên dưới để sign-off campaign — anh sẽ nhận được
         brief ngay lập tức 📬

@@ -9,7 +9,12 @@ import type { SubmissionRow } from "@/lib/db/schema";
 import { getAppConfig } from "./app-config";
 import { notifySubmission } from "./notify";
 import { buildCalendar, getTodayInVietnam, type DayAvailability } from "./schedule";
-import type { OptionType, StepChoice, SubmissionPayload } from "@/lib/types";
+import {
+  OPTION_TYPES,
+  type OptionType,
+  type StepChoice,
+  type SubmissionPayload,
+} from "@/lib/types";
 
 /** Validate cấu trúc input ở boundary (API route) bằng zod */
 const stepChoiceSchema = z.discriminatedUnion("kind", [
@@ -25,6 +30,7 @@ const stepChoiceSchema = z.discriminatedUnion("kind", [
 export const submissionInputSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "date phải dạng YYYY-MM-DD"),
   slot: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "slot phải dạng HH:mm (00:00–23:59)"),
+  activity: stepChoiceSchema,
   food: stepChoiceSchema,
   movie: stepChoiceSchema,
   cafe: stepChoiceSchema,
@@ -97,6 +103,7 @@ export function validateSubmission(
     version: 1,
     date: input.date,
     slot: input.slot,
+    activity: validateChoice(input.activity, "activity", ctx, false),
     food: validateChoice(input.food, "food", ctx, false),
     movie: validateChoice(input.movie, "movie", ctx, ctx.allowSkipMovie),
     cafe: validateChoice(input.cafe, "cafe", ctx, ctx.allowSkipCafe),
@@ -113,7 +120,7 @@ function buildContext(
   allowSkipCafe: boolean
 ): SubmissionContext {
   const optionsById = new Map<number, { type: OptionType; name: string }>();
-  for (const type of ["food", "movie", "cafe"] as const) {
+  for (const type of OPTION_TYPES) {
     for (const row of options[type]) {
       optionsById.set(row.id, { type, name: row.name });
     }

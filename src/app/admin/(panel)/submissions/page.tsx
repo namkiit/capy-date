@@ -42,6 +42,11 @@ export default function AdminSubmissionsPage() {
             </div>
             <dl className="mt-2 space-y-1 text-sm text-ink">
               <div className="flex gap-2">
+                <dt className="w-16 shrink-0 font-bold text-capy-deep">🎡 Chơi</dt>
+                {/* submission lưu trước khi có bước vui chơi không có field này */}
+                <dd>{sub.payload.activity ? describeChoice(sub.payload.activity) : "—"}</dd>
+              </div>
+              <div className="flex gap-2">
                 <dt className="w-16 shrink-0 font-bold text-capy-deep">🍜 Ăn</dt>
                 <dd>{describeChoice(sub.payload.food)}</dd>
               </div>

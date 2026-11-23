@@ -21,6 +21,7 @@ export interface FlowState {
   date: string | null;
   /** HH:mm */
   slot: string | null;
+  activity: StepChoice | null;
   food: StepChoice | null;
   movie: StepChoice | null;
   cafe: StepChoice | null;
@@ -39,6 +40,7 @@ export const INITIAL_FLOW_STATE: FlowState = {
   noDodgeCount: 0,
   date: null,
   slot: null,
+  activity: null,
   food: null,
   movie: null,
   cafe: null,
@@ -129,23 +131,29 @@ function sanitizeChoice(
 }
 
 /**
- * Đối chiếu lựa chọn quán/phim/cafe đã lưu với dữ liệu hiện tại:
+ * Đối chiếu lựa chọn vui chơi/quán/phim/cafe đã lưu với dữ liệu hiện tại:
  * option bị host xóa/tắt → bỏ lựa chọn; skip không còn được phép → bỏ.
  */
 export function sanitizeChoices(state: FlowState, ctx: ChoiceContext): FlowState {
+  const activity = sanitizeChoice(state.activity, ctx.activeIds.activity, false);
   const food = sanitizeChoice(state.food, ctx.activeIds.food, false);
   const movie = sanitizeChoice(state.movie, ctx.activeIds.movie, ctx.allowSkipMovie);
   const cafe = sanitizeChoice(state.cafe, ctx.activeIds.cafe, ctx.allowSkipCafe);
   // mất lựa chọn nào đó → media plan đã duyệt không còn đúng, bắt duyệt lại
   const lostChoice =
+    (state.activity !== null && activity === null) ||
     (state.food !== null && food === null) ||
     (state.movie !== null && movie === null) ||
     (state.cafe !== null && cafe === null);
+  // state lưu trước khi có bước vui chơi: đã duyệt plan nhưng chưa từng chọn activity
+  // (không phải "mất" lựa chọn) — plan thiếu mốc thì cũng phải duyệt lại
+  const incomplete = activity === null || food === null || movie === null || cafe === null;
   return {
     ...state,
+    activity,
     food,
     movie,
     cafe,
-    timelineConfirmed: lostChoice ? false : state.timelineConfirmed,
+    timelineConfirmed: lostChoice || incomplete ? false : state.timelineConfirmed,
   };
 }

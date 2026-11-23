@@ -17,7 +17,7 @@ export function Step7Dresscode({ dresscode, vibeChoices, vibe, onPickVibe }: Ste
   return (
     <SectionShell
       id="step-dresscode"
-      eyebrow="Hạng mục 07 — Brand Guidelines"
+      eyebrow="Hạng mục 08 — Brand Guidelines"
       title="Dresscode của campaign 🧥"
     >
       <p className="leading-relaxed text-ink">{dresscode.description}</p>
