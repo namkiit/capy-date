@@ -7,6 +7,34 @@
 import pg from "pg";
 
 const seedOptions = [
+  // ---- activity ----
+  {
+    type: "activity",
+    name: "Workshop làm gốm",
+    description: "Tự tay nặn một chiếc cốc, lấm lem một chút cho vui.",
+    priceRange: "250–350k/người",
+    hostNote: "Sản phẩm mang về làm kỷ niệm — asset dùng lâu dài.",
+    extra: null,
+    sortOrder: 0,
+  },
+  {
+    type: "activity",
+    name: "Khu trò chơi & gắp thú",
+    description: "Bắn bóng rổ, đua xe, gắp thú bông tới khi nào trúng thì thôi.",
+    priceRange: "150–250k/2 người",
+    hostNote: "Anh cam kết KPI: ít nhất một con thú bông.",
+    extra: null,
+    sortOrder: 1,
+  },
+  {
+    type: "activity",
+    name: "Dạo phố đi bộ & chụp ảnh",
+    description: "Đi bộ thong thả, ăn vặt dọc đường, chụp vài tấm làm tư liệu.",
+    priceRange: "Gần như miễn phí",
+    hostNote: "Budget thấp, engagement cao.",
+    extra: null,
+    sortOrder: 2,
+  },
   // ---- food ----
   {
     type: "food",

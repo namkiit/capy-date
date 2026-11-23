@@ -7,7 +7,12 @@ import {
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
-import type { OptionExtra, OptionType, SubmissionPayload } from "@/lib/types";
+import {
+  OPTION_TYPES,
+  type OptionExtra,
+  type OptionType,
+  type SubmissionPayload,
+} from "@/lib/types";
 
 /** Key-value config: content, schedule, durations — value là jsonb typed ở tầng service */
 export const config = pgTable("config", {
@@ -16,10 +21,11 @@ export const config = pgTable("config", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-/** Lựa chọn quán ăn / phim / cafe do host cấu hình */
+/** Lựa chọn vui chơi / quán ăn / phim / cafe do host cấu hình */
 export const options = pgTable("options", {
   id: serial("id").primaryKey(),
-  type: text("type", { enum: ["food", "movie", "cafe"] }).$type<OptionType>().notNull(),
+  // cột text thường (không CHECK ở DB) — thêm loại mới không cần migration
+  type: text("type", { enum: OPTION_TYPES }).$type<OptionType>().notNull(),
   name: text("name").notNull(),
   description: text("description").notNull().default(""),
   /** Danh sách URL ảnh (Blob hoặc URL ngoài) */

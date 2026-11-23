@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { OPTION_TYPES } from "@/lib/types";
 
 /** Zod schemas validate input admin ở boundary (API routes) */
 
@@ -40,6 +41,7 @@ export const contentConfigSchema = z.object({
 
 export const durationsConfigSchema = z.object({
   pickupMinutes: z.number().int().min(0).max(240),
+  activityMinutes: z.number().int().min(15).max(360),
   foodMinutes: z.number().int().min(15).max(360),
   movieMinutes: z.number().int().min(30).max(360),
   cafeMinutes: z.number().int().min(15).max(360),
@@ -59,7 +61,7 @@ export const optionExtraSchema = z.object({
 });
 
 export const optionInputSchema = z.object({
-  type: z.enum(["food", "movie", "cafe"]),
+  type: z.enum(OPTION_TYPES),
   name: z.string().min(1).max(200),
   description: z.string().max(1000),
   images: z.array(httpsUrl(1000)).max(6),

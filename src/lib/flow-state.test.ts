@@ -28,6 +28,17 @@ describe("parseFlowState", () => {
     expect(state.feedback).toBe("");
   });
 
+  it("state lưu trước khi có bước vui chơi (thiếu activity) → activity là null, giữ lựa chọn cũ", () => {
+    const stored = JSON.stringify({
+      version: FLOW_STATE_VERSION,
+      food: { kind: "surprise" },
+      cafe: { kind: "surprise" },
+    });
+    const state = parseFlowState(stored);
+    expect(state.activity).toBeNull();
+    expect(state.food).toEqual({ kind: "surprise" });
+  });
+
   it("reset khi sai version", () => {
     const stored = JSON.stringify({ version: 999, approved: true });
     expect(parseFlowState(stored)).toEqual(INITIAL_FLOW_STATE);
@@ -110,7 +121,7 @@ describe("sanitizeFlowState", () => {
 
 describe("sanitizeChoices", () => {
   const ctx = {
-    activeIds: { food: [1, 2], movie: [10], cafe: [20] },
+    activeIds: { activity: [30], food: [1, 2], movie: [10], cafe: [20] },
     allowSkipMovie: true,
     allowSkipCafe: false,
   };
@@ -135,6 +146,38 @@ describe("sanitizeChoices", () => {
     expect(sanitizeChoices(state, ctx).food).toBeNull();
   });
 
+  it("activity: giữ option active/surprise, bỏ option đã xóa và bỏ skip (không bao giờ cho skip)", () => {
+    const kept = stateWith({
+      activity: { kind: "option", optionId: 30, optionName: "Workshop làm gốm" },
+    });
+    expect(sanitizeChoices(kept, ctx)).toEqual(kept);
+    expect(
+      sanitizeChoices(stateWith({ activity: { kind: "surprise" } }), ctx).activity
+    ).toEqual({ kind: "surprise" });
+
+    const removed = sanitizeChoices(
+      stateWith({
+        activity: { kind: "option", optionId: 99, optionName: "Đã xóa" },
+        timelineConfirmed: true,
+      }),
+      ctx
+    );
+    expect(removed.activity).toBeNull();
+    expect(removed.timelineConfirmed).toBe(false);
+
+    expect(sanitizeChoices(stateWith({ activity: { kind: "skip" } }), ctx).activity).toBeNull();
+  });
+
+  it("plan đã duyệt nhưng còn thiếu lựa chọn (state cũ chưa có activity) → phải duyệt lại", () => {
+    const state = stateWith({
+      food: { kind: "option", optionId: 1, optionName: "Quán nướng" },
+      movie: { kind: "skip" },
+      cafe: { kind: "surprise" },
+      timelineConfirmed: true,
+    });
+    expect(sanitizeChoices(state, ctx).timelineConfirmed).toBe(false);
+  });
+
   it("bỏ skip khi config không còn cho phép skip", () => {
     const state = stateWith({ cafe: { kind: "skip" } });
     expect(sanitizeChoices(state, ctx).cafe).toBeNull();
@@ -152,6 +195,7 @@ describe("sanitizeChoices", () => {
 
     const intact = sanitizeChoices(
       stateWith({
+        activity: { kind: "surprise" },
         food: { kind: "option", optionId: 1, optionName: "Quán nướng" },
         movie: { kind: "skip" },
         cafe: { kind: "surprise" },
@@ -168,7 +212,7 @@ describe("sanitizeFlowState + sanitizeChoices kết hợp", () => {
     { date: "2026-08-13", isoWeekday: 4, slots: ["19:00"], disabled: false },
   ];
   const ctx = {
-    activeIds: { food: [1], movie: [10], cafe: [20] },
+    activeIds: { activity: [30], food: [1], movie: [10], cafe: [20] },
     allowSkipMovie: true,
     allowSkipCafe: false,
   };

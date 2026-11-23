@@ -28,7 +28,7 @@ import {
   type FlowState,
 } from "@/lib/flow-state";
 import type { DayAvailability } from "@/lib/services/schedule";
-import type { ContentConfig, StepChoice, TimelineDurations } from "@/lib/types";
+import type { ContentConfig, OptionType, StepChoice, TimelineDurations } from "@/lib/types";
 
 /** Sau khoảng im lặng này (ms) mascot chuyển sang ngủ */
 const SLEEPY_AFTER_MS = 45_000;
@@ -52,6 +52,7 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
   const [state, setState] = useState<FlowState>(() =>
     sanitizeChoices(sanitizeFlowState(readStoredFlowState(), days), {
       activeIds: {
+        activity: options.activity.map((o) => o.id),
         food: options.food.map((o) => o.id),
         movie: options.movie.map((o) => o.id),
         cafe: options.cafe.map((o) => o.id),
@@ -137,13 +138,13 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
     (slot: string) => {
       update({ slot });
       celebrate();
-      scrollTo("step-food");
+      scrollTo("step-activity");
     },
     [update, celebrate, scrollTo]
   );
 
   const handleChoose = useCallback(
-    (field: "food" | "movie" | "cafe", nextSectionId: string) =>
+    (field: OptionType, nextSectionId: string) =>
       (choice: StepChoice) => {
         // đọc state ngoài updater — side effect trong updater không an toàn
         // (React được phép gọi lại updater trong StrictMode/concurrent render).
@@ -175,8 +176,11 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
   // ---- submit ----
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  // mở lại site sau khi đã chốt deal → hiện thẳng thiệp
-  const [cardOpen, setCardOpen] = useState(() => state.submittedAt !== null);
+  // mở lại site sau khi đã chốt deal → hiện thẳng thiệp. Plan không còn ở trạng thái
+  // đã duyệt (state cũ thiếu bước vui chơi, option bị xóa) thì thiệp cũ không còn đúng
+  const [cardOpen, setCardOpen] = useState(
+    () => state.submittedAt !== null && state.timelineConfirmed
+  );
   // guard double-tap bằng ref: state `submitting` trong closure có thể stale
   const submitInFlight = useRef(false);
 
@@ -191,8 +195,9 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
       );
       scrollTo(sectionId);
     };
-    const { date, slot, food, movie, cafe } = state;
+    const { date, slot, activity, food, movie, cafe } = state;
     if (date === null || slot === null) return reportMissing("step-schedule");
+    if (activity === null) return reportMissing("step-activity");
     if (food === null) return reportMissing("step-food");
     if (movie === null) return reportMissing("step-movie");
     if (cafe === null) return reportMissing("step-cafe");
@@ -207,6 +212,7 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
         body: JSON.stringify({
           date,
           slot,
+          activity,
           food,
           movie,
           cafe,
@@ -232,21 +238,41 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
     }
   }, [state, update, celebrate, scrollTo]);
 
-  const allChosen = state.slot !== null && state.food !== null && state.movie !== null && state.cafe !== null;
+  // Mỗi bước chỉ mở khi MỌI bước trước đã chọn — state cũ thiếu một bước ở giữa
+  // (VD chưa có vui chơi) thì các bước sau ẩn theo, không nhảy cóc
+  const foodOpen = state.slot !== null && state.activity !== null;
+  const movieOpen = foodOpen && state.food !== null;
+  const cafeOpen = movieOpen && state.movie !== null;
+  const allChosen = cafeOpen && state.cafe !== null;
 
   const timelineItems = useMemo(() => {
-    if (!allChosen || state.slot === null || !state.food || !state.movie || !state.cafe) {
+    if (
+      state.slot === null ||
+      !state.activity ||
+      !state.food ||
+      !state.movie ||
+      !state.cafe
+    ) {
       return [];
     }
     return buildTimeline({
       slot: state.slot,
+      activity: state.activity,
       food: state.food,
       movie: state.movie,
       cafe: state.cafe,
       durations,
       pickupPlace: content.pickupPlace,
     });
-  }, [allChosen, state.slot, state.food, state.movie, state.cafe, durations, content.pickupPlace]);
+  }, [
+    state.slot,
+    state.activity,
+    state.food,
+    state.movie,
+    state.cafe,
+    durations,
+    content.pickupPlace,
+  ]);
 
   return (
     <main className="relative flex-1 pb-24">
@@ -291,7 +317,24 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
       )}
 
       {state.slot !== null && (
-        <SectionShell id="step-food" eyebrow="Hạng mục 03 — Dining" title="Ăn gì đây? 🍜">
+        <SectionShell
+          id="step-activity"
+          eyebrow="Hạng mục 03 — Activation"
+          title="Chơi gì trước? 🎡"
+        >
+          <OptionPicker
+            options={options.activity}
+            choice={state.activity}
+            chooseLabel="Chốt kèo này 🎡"
+            surpriseLabel="Để anh lên kèo bí mật 🎲"
+            skipLabel={null}
+            onChoose={handleChoose("activity", "step-food")}
+          />
+        </SectionShell>
+      )}
+
+      {foodOpen && (
+        <SectionShell id="step-food" eyebrow="Hạng mục 04 — Dining" title="Ăn gì đây? 🍜">
           <OptionPicker
             options={options.food}
             choice={state.food}
@@ -303,10 +346,10 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
         </SectionShell>
       )}
 
-      {state.food !== null && (
+      {movieOpen && (
         <SectionShell
           id="step-movie"
-          eyebrow="Hạng mục 04 — Entertainment"
+          eyebrow="Hạng mục 05 — Entertainment"
           title="Xem phim gì? 🎬"
         >
           <OptionPicker
@@ -320,8 +363,8 @@ export function InviteFlow({ content, days, options, durations }: InviteFlowProp
         </SectionShell>
       )}
 
-      {state.movie !== null && (
-        <SectionShell id="step-cafe" eyebrow="Hạng mục 05 — Chill" title="Cafe chốt hạ 🧋">
+      {cafeOpen && (
+        <SectionShell id="step-cafe" eyebrow="Hạng mục 06 — Chill" title="Cafe chốt hạ 🧋">
           <OptionPicker
             options={options.cafe}
             choice={state.cafe}

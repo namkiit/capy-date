@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { DayAvailability } from "./schedule";
 import {
   SubmissionValidationError,
+  submissionInputSchema,
   validateSubmission,
   type SubmissionContext,
   type SubmissionInput,
@@ -18,6 +19,7 @@ const ctx: SubmissionContext = {
     [1, { type: "food", name: "Quán nướng ấm cúng" }],
     [10, { type: "movie", name: "Phim rom-com" }],
     [20, { type: "cafe", name: "Cafe sân vườn" }],
+    [30, { type: "activity", name: "Workshop làm gốm" }],
   ]),
   allowSkipMovie: true,
   allowSkipCafe: false,
@@ -27,6 +29,7 @@ function makeInput(patch: Partial<SubmissionInput> = {}): SubmissionInput {
   return {
     date: "2026-08-15",
     slot: "19:00",
+    activity: { kind: "option", optionId: 30, optionName: "tên client gửi lên" },
     food: { kind: "option", optionId: 1, optionName: "tên client gửi lên" },
     movie: { kind: "skip" },
     cafe: { kind: "option", optionId: 20, optionName: "Cafe sân vườn" },
@@ -91,9 +94,43 @@ describe("validateSubmission", () => {
     expect(() => validateSubmission(makeInput(), ctx)).not.toThrow();
   });
 
-  it("surprise luôn hợp lệ cho cả 3 bước", () => {
+  it("activity: lấy tên từ DB, không cho skip, không nhận option sai loại", () => {
+    expect(validateSubmission(makeInput(), ctx).activity).toEqual({
+      kind: "option",
+      optionId: 30,
+      optionName: "Workshop làm gốm",
+    });
+    expect(() => validateSubmission(makeInput({ activity: { kind: "skip" } }), ctx)).toThrow(
+      SubmissionValidationError
+    );
+    // dùng id của quán ăn cho bước vui chơi
+    expect(() =>
+      validateSubmission(
+        makeInput({ activity: { kind: "option", optionId: 1, optionName: "x" } }),
+        ctx
+      )
+    ).toThrow(SubmissionValidationError);
+    // id của hoạt động vui chơi dùng cho bước ăn
+    expect(() =>
+      validateSubmission(
+        makeInput({ food: { kind: "option", optionId: 30, optionName: "x" } }),
+        ctx
+      )
+    ).toThrow(SubmissionValidationError);
+  });
+
+  it("schema ở boundary bắt buộc có activity (client cũ thiếu field → không qua)", () => {
+    const withoutActivity: Partial<SubmissionInput> = makeInput();
+    delete withoutActivity.activity;
+
+    expect(submissionInputSchema.safeParse(makeInput()).success).toBe(true);
+    expect(submissionInputSchema.safeParse(withoutActivity).success).toBe(false);
+  });
+
+  it("surprise luôn hợp lệ cho cả 4 bước", () => {
     const payload = validateSubmission(
       makeInput({
+        activity: { kind: "surprise" },
         food: { kind: "surprise" },
         movie: { kind: "surprise" },
         cafe: { kind: "surprise" },
@@ -101,6 +138,7 @@ describe("validateSubmission", () => {
       ctx
     );
     expect(payload.food.kind).toBe("surprise");
+    expect(payload.activity).toEqual({ kind: "surprise" });
   });
 
   it("feedback toàn khoảng trắng chuẩn hóa thành null", () => {
@@ -125,6 +163,7 @@ describe("validateSubmission", () => {
 
     const payload = validateSubmission(
       makeInput({
+        activity: { kind: "surprise" },
         food: { kind: "surprise" },
         movie: { kind: "skip" }, // allowSkipMovie true trong ctx gốc
         cafe: { kind: "surprise" },

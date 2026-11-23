@@ -29,7 +29,7 @@ export function Step6Timeline({
   return (
     <SectionShell
       id="step-timeline"
-      eyebrow="Hạng mục 06 — Media Plan"
+      eyebrow="Hạng mục 07 — Media Plan"
       title="Timeline buổi hẹn 📋"
     >
       <ol className="relative ml-1 space-y-0">

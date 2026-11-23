@@ -7,7 +7,7 @@ import { adminApi } from "@/lib/admin-client";
 const TABS = [
   { href: "/admin/submissions", label: "Submissions 💌" },
   { href: "/admin/schedule", label: "Lịch 🗓️" },
-  { href: "/admin/options", label: "Quán & Phim 🍜" },
+  { href: "/admin/options", label: "Chơi, Quán & Phim 🎡" },
   { href: "/admin/content", label: "Nội dung ✏️" },
 ];
 

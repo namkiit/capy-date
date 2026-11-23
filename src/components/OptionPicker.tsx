@@ -21,7 +21,7 @@ interface OptionPickerProps {
 }
 
 /**
- * Picker dùng chung cho 3 bước ăn/phim/cafe: grid card + card surprise,
+ * Picker dùng chung cho 4 bước chơi/ăn/phim/cafe: grid card + card surprise,
  * bấm card mở bottom-sheet chi tiết, chọn trong sheet. Có thể skip nếu cho phép.
  */
 export function OptionPicker({

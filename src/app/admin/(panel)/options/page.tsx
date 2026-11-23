@@ -13,9 +13,10 @@ import {
 import { adminApi } from "@/lib/admin-client";
 import type { OptionInput } from "@/lib/admin-schemas";
 import type { OptionRow } from "@/lib/db/schema";
-import type { OptionType } from "@/lib/types";
+import { OPTION_TYPES, type OptionType } from "@/lib/types";
 
 const TYPE_LABELS: Record<OptionType, string> = {
+  activity: "🎡 Vui chơi",
   food: "🍜 Quán ăn",
   movie: "🎬 Phim",
   cafe: "🧋 Cafe",
@@ -156,12 +157,12 @@ export default function AdminOptionsPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-ink">Quán & Phim 🍜</h1>
+      <h1 className="font-display text-2xl font-bold text-ink">Chơi, Quán & Phim 🎡</h1>
       <StatusMessage message={message} />
 
       {options === null && !message && <p className="mt-4 text-ink-soft">Đang tải...</p>}
 
-      {(["food", "movie", "cafe"] as const).map((type) => (
+      {OPTION_TYPES.map((type) => (
         <section key={type} className="mt-6">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-bold text-ink">{TYPE_LABELS[type]}</h2>

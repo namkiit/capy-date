@@ -132,6 +132,9 @@ export default function AdminSchedulePage() {
   return (
     <div>
       <h1 className="font-display text-2xl font-bold text-ink">Lịch rảnh/bận 🗓️</h1>
+      <p className="mt-1 text-xs text-ink-soft">
+        Slot là giờ bắt đầu buổi hẹn (giờ đi chơi) — giờ ăn tự cộng thêm thời lượng vui chơi.
+      </p>
 
       <label className={labelCls}>Slot ngày thường (T2–T6)</label>
       <input value={weekdayStr} onChange={(e) => setWeekdayStr(e.target.value)} className={inputCls} placeholder="19:00, 20:00" />
